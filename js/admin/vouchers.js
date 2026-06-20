@@ -1,5 +1,5 @@
 // js/admin/vouchers.js
-import { supabase } from '../config/supabase.js';
+import { supabase } from '../config/supabase.js'; 
 import { showToast, generateId } from '../utils/helpers.js';
 
 export async function generateVouchers(packageId, quantity, expiryDate) {
