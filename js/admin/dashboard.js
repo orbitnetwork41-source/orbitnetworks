@@ -1,5 +1,5 @@
 // js/admin/dashboard.js
-// COMPLETE ADMIN DASHBOARD - ALL MODULES INTEGRATED
+// COMPLETE ADMIN DASHBOARD WITH AUTH SERVICE
 
 import { supabase } from '../config/supabase.js';
 import { AuthService } from '../services/auth.service.js';
@@ -19,10 +19,28 @@ import { generateVouchers, getVoucherStats, loadVouchers, redeemVoucher } from '
 import { sendWhatsAppMessage, getWhatsAppStats } from './modules/whatsapp.js';
 
 // ============================================
+// AUTH CHECK - Using AuthService
+// ============================================
+if (!AuthService.isAuthenticated()) {
+    console.log('🔒 Not authenticated, redirecting to login...');
+    window.location.href = '/login.html';
+    throw new Error('Not authenticated');
+}
+
+const user = AuthService.getCurrentUser();
+if (!AuthService.isAdmin()) {
+    console.log('🔒 Not admin, redirecting...');
+    window.location.href = '/';
+    throw new Error('Admin access required');
+}
+
+console.log(`✅ Authenticated as: ${user?.profile?.full_name || user?.email}`);
+
+// ============================================
 // STATE
 // ============================================
 const state = {
-    currentUser: null,
+    currentUser: user,
     stats: {
         customers: 0,
         revenue: 0,
@@ -68,6 +86,8 @@ const DOM = {
     routersOnline: document.getElementById('routersOnline'),
     customerCount: document.getElementById('customerCount'),
     adminName: document.getElementById('adminName'),
+    adminNameDisplay: document.getElementById('adminNameDisplay'),
+    adminInitials: document.getElementById('adminInitials'),
     
     // Module Stats
     walletBalance: document.getElementById('walletBalance'),
@@ -99,19 +119,24 @@ const DOM = {
 };
 
 // ============================================
-// AUTH CHECK
+// SET USER INFO
 // ============================================
-if (!AuthService.isAuthenticated() || !AuthService.isAdmin()) {
-    window.location.href = '/';
+function setUserInfo() {
+    const user = state.currentUser;
+    const name = user?.profile?.full_name || user?.email?.split('@')[0] || 'Admin';
+    const initials = getInitials(name);
+    
+    if (DOM.adminName) DOM.adminName.textContent = name;
+    if (DOM.adminNameDisplay) DOM.adminNameDisplay.textContent = name;
+    if (DOM.adminInitials) DOM.adminInitials.textContent = initials;
 }
 
 // ============================================
 // INITIALIZATION
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
-    const user = AuthService.getCurrentUser();
-    state.currentUser = user;
-    DOM.adminName.textContent = user?.profile?.full_name || 'Admin';
+    // Set user info
+    setUserInfo();
     
     // Show loading state
     showLoadingState();
@@ -130,6 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await updateNotificationBadge();
         
         console.log('🚀 Orbit Networks Admin Dashboard ready!');
+        console.log(`👤 Logged in as: ${state.currentUser?.profile?.full_name || state.currentUser?.email}`);
         
     } catch (error) {
         console.error('Dashboard initialization error:', error);
@@ -167,7 +193,7 @@ async function loadAllDashboardData() {
 
         // Update state
         state.stats = { ...state.stats, ...stats };
-        state.stats.walletBalance = walletData.balance;
+        state.stats.walletBalance = walletData.balance || 0;
         state.stats.openTickets = ticketStats.open || 0;
         state.stats.pendingInvoices = invoiceStats.pending || 0;
         state.stats.referrals = referralStats.total || 0;
@@ -750,9 +776,8 @@ function showLoadingState() {
 }
 
 function showNotificationPanel() {
-    // Create a notification panel similar to Meawlan's bell icon
-    // This will be implemented in the HTML
-    showToast('Notification panel coming soon!', 'info');
+    // Create a notification panel
+    showToast('📬 You have ' + (DOM.notificationBadge?.textContent || '0') + ' unread notifications', 'info');
 }
 
 // ============================================
