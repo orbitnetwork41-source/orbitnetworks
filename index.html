@@ -1,17 +1,306 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Orbit Networks - WiFi Billing</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+        /* ============================================================
+           THEME TOGGLE STYLES
+           ============================================================ */
+        .theme-toggle {
+            position: relative;
+            width: 48px;
+            height: 26px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .theme-toggle:hover {
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+
+        .theme-toggle .toggle-thumb {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .theme-toggle.light .toggle-thumb {
+            left: 25px;
+            background: #0f0f1a;
+        }
+
+        .theme-toggle .toggle-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle .toggle-icon.sun {
+            left: 6px;
+            color: #fbbf24;
+        }
+
+        .theme-toggle .toggle-icon.moon {
+            right: 6px;
+            color: #94a3b8;
+        }
+
+        .theme-toggle.light .toggle-icon.sun {
+            opacity: 1;
+        }
+
+        .theme-toggle.light .toggle-icon.moon {
+            opacity: 0.3;
+        }
+
+        .theme-toggle:not(.light) .toggle-icon.sun {
+            opacity: 0.3;
+        }
+
+        .theme-toggle:not(.light) .toggle-icon.moon {
+            opacity: 1;
+        }
+
+        /* ============================================================
+           LIGHT THEME OVERRIDES
+           ============================================================ */
+        [data-theme="light"] {
+            --bg-body: #f1f5f9;
+            --bg-surface: #ffffff;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f8fafc;
+            --bg-sidebar: #ffffff;
+            --bg-glass: rgba(255, 255, 255, 0.8);
+            --text-primary: #0f172a;
+            --text-secondary: #334155;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            --sidebar-border: rgba(0, 0, 0, 0.06);
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #0f0f1a;
+            --bg-surface: #1a1a2e;
+            --bg-card: #1a1a2e;
+            --bg-card-hover: #24243a;
+            --bg-sidebar: #111827;
+            --bg-glass: rgba(255, 255, 255, 0.05);
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: rgba(255, 255, 255, 0.06);
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+            --sidebar-border: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Apply theme variables */
+        body {
+            background: var(--bg-body);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar {
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--sidebar-border);
+        }
+
+        .sidebar-header {
+            border-bottom: 1px solid var(--sidebar-border);
+        }
+
+        .sidebar-header .border-t {
+            border-color: var(--sidebar-border) !important;
+        }
+
+        .card, .stat-card, .admin-stat-card, .admin-chart-card, .admin-activity-card, .admin-quick-actions-card {
+            background: var(--bg-card);
+            border-color: var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card:hover, .admin-stat-card:hover {
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+        }
+
+        .nav-link:hover {
+            background: rgba(14, 165, 233, 0.08);
+            color: var(--text-primary);
+        }
+
+        .nav-link.active {
+            background: rgba(14, 165, 233, 0.12);
+            color: #60a5fa;
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--sidebar-border);
+        }
+
+        .logout-btn {
+            color: var(--text-muted);
+            border-color: var(--border-color);
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .content {
+            background: var(--bg-body);
+        }
+
+        .admin-stat-mini {
+            background: var(--bg-card);
+            border-color: var(--border-color);
+        }
+
+        .bg-white\/5 {
+            background: var(--bg-glass) !important;
+        }
+
+        .border-white\/10 {
+            border-color: var(--border-color) !important;
+        }
+
+        .border-white\/5 {
+            border-color: var(--border-color) !important;
+        }
+
+        .text-gray-400, .text-gray-500 {
+            color: var(--text-muted) !important;
+        }
+
+        .text-gray-300 {
+            color: var(--text-secondary) !important;
+        }
+
+        .text-white {
+            color: var(--text-primary) !important;
+        }
+
+        .bg-white\/10 {
+            background: var(--bg-glass) !important;
+        }
+
+        .hover\:bg-white\/10:hover {
+            background: rgba(14, 165, 233, 0.05) !important;
+        }
+
+        .hover\:bg-white\/5:hover {
+            background: rgba(14, 165, 233, 0.03) !important;
+        }
+
+        .package-card {
+            background: var(--bg-card);
+            border-color: var(--border-color);
+        }
+
+        .router-card {
+            background: var(--bg-card);
+            border-color: var(--border-color);
+        }
+
+        .table-container {
+            background: var(--bg-card);
+            border-color: var(--border-color);
+        }
+
+        thead {
+            background: rgba(14, 165, 233, 0.03);
+        }
+
+        th {
+            color: var(--text-muted);
+            border-bottom-color: var(--border-color);
+        }
+
+        td {
+            border-bottom-color: rgba(255, 255, 255, 0.03);
+        }
+
+        tr:hover td {
+            background: rgba(14, 165, 233, 0.02);
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            background: var(--bg-glass);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: #0ea5e9;
+        }
+
+        .form-group label {
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary {
+            background: var(--bg-glass);
+            color: var(--text-secondary);
+            border-color: var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(14, 165, 233, 0.08);
+        }
+
+        #loginPage {
+            background: var(--bg-body);
+        }
+
+        .login-card {
+            background: var(--bg-card);
+            border-color: var(--border-color);
+        }
+
+        /* Toast theme */
+        .toast {
+            background: var(--bg-card) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-primary) !important;
+        }
+    </style>
 </head>
 <body>
-    <!-- Login Page -->
-    <div id="loginPage" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-        <div class="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
+    <!-- ============================================================
+    LOGIN PAGE
+    ============================================================ -->
+    <div id="loginPage" class="min-h-screen flex items-center justify-center">
+        <div class="login-card bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
             <div class="text-center mb-8">
                 <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
                     <i class="fas fa-satellite-dish text-3xl text-white"></i>
@@ -46,18 +335,35 @@
         </div>
     </div>
 
-    <!-- Main App (hidden until login) -->
+    <!-- ============================================================
+    MAIN APP
+    ============================================================ -->
     <div id="app" class="hidden">
-        <!-- Sidebar -->
+        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-satellite-dish text-blue-400 text-2xl"></i>
-                    <span class="text-xl font-bold text-white">Orbit</span>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-satellite-dish text-blue-400 text-2xl"></i>
+                        <span class="text-xl font-bold text-white">Orbit</span>
+                    </div>
+                    <!-- Theme Toggle in Sidebar -->
+                    <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
+                        <span class="toggle-icon sun"><i class="fas fa-sun"></i></span>
+                        <span class="toggle-icon moon"><i class="fas fa-moon"></i></span>
+                        <span class="toggle-thumb" id="toggleThumb">
+                            <i class="fas fa-moon" id="toggleIcon" style="font-size: 9px;"></i>
+                        </span>
+                    </div>
                 </div>
                 <div class="mt-4 pt-4 border-t border-white/10">
-                    <p class="text-sm text-white font-medium" id="userName">Admin</p>
-                    <p class="text-xs text-gray-400">Administrator</p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm" id="userAvatar">A</div>
+                        <div>
+                            <p class="text-sm text-white font-medium" id="userName">Admin</p>
+                            <p class="text-xs text-gray-400" id="userRole">Administrator</p>
+                        </div>
+                    </div>
                 </div>
             </div>
             <nav class="sidebar-nav">
@@ -68,6 +374,7 @@
                 <a href="#customers" class="nav-link" data-page="customers">
                     <i class="fas fa-users"></i>
                     <span>Customers</span>
+                    <span class="ml-auto bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded-full" id="customerCount">0</span>
                 </a>
                 <a href="#packages" class="nav-link" data-page="packages">
                     <i class="fas fa-box"></i>
@@ -98,35 +405,45 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
+        <!-- MAIN CONTENT -->
         <main class="content">
-            <div id="dashboardPage" class="page-content active">
-                <!-- Dashboard content -->
+            <!-- Top Bar -->
+            <div class="topbar">
+                <div>
+                    <h1 class="text-2xl font-bold" id="pageTitle">Dashboard</h1>
+                    <p class="text-sm text-gray-400" id="pageSubtitle">Welcome back, <span id="adminName">Admin</span>!</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button id="refreshBtn" class="topbar-btn" title="Refresh">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button id="notificationBell" class="topbar-btn relative" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span id="notificationBadge" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center hidden">0</span>
+                    </button>
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                        <span class="font-bold text-sm text-white" id="topbarAvatar">SA</span>
+                    </div>
+                </div>
             </div>
-            <div id="customersPage" class="page-content hidden">
-                <!-- Customers content -->
-            </div>
-            <div id="packagesPage" class="page-content hidden">
-                <!-- Packages content -->
-            </div>
-            <div id="paymentsPage" class="page-content hidden">
-                <!-- Payments content -->
-            </div>
-            <div id="routersPage" class="page-content hidden">
-                <!-- Routers content -->
-            </div>
-            <div id="reportsPage" class="page-content hidden">
-                <!-- Reports content -->
-            </div>
-            <div id="settingsPage" class="page-content hidden">
-                <!-- Settings content -->
-            </div>
+
+            <!-- Pages -->
+            <div id="dashboardPage" class="page-content active"></div>
+            <div id="customersPage" class="page-content hidden"></div>
+            <div id="packagesPage" class="page-content hidden"></div>
+            <div id="paymentsPage" class="page-content hidden"></div>
+            <div id="routersPage" class="page-content hidden"></div>
+            <div id="reportsPage" class="page-content hidden"></div>
+            <div id="settingsPage" class="page-content hidden"></div>
         </main>
     </div>
 
-    <!-- Toast Container -->
+    <!-- TOAST CONTAINER -->
     <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
+    <!-- ============================================================
+    SCRIPTS
+    ============================================================ -->
     <script type="importmap">
     {
         "imports": {
@@ -134,6 +451,85 @@
         }
     }
     </script>
+
+    <script>
+    // ============================================================
+    // THEME TOGGLE
+    // ============================================================
+    function toggleTheme() {
+        const html = document.documentElement;
+        const current = html.getAttribute('data-theme');
+        const newTheme = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeUI(newTheme);
+    }
+
+    function updateThemeUI(theme) {
+        const toggle = document.getElementById('themeToggle');
+        const thumb = document.getElementById('toggleThumb');
+        const icon = document.getElementById('toggleIcon');
+
+        if (theme === 'light') {
+            toggle.classList.add('light');
+            icon.className = 'fas fa-sun';
+            icon.style.color = '#fbbf24';
+        } else {
+            toggle.classList.remove('light');
+            icon.className = 'fas fa-moon';
+            icon.style.color = '#94a3b8';
+        }
+    }
+
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeUI(savedTheme);
+
+    // ============================================================
+    // TOAST HELPER (for non-module scripts)
+    // ============================================================
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const colors = {
+            success: 'bg-green-500/90',
+            error: 'bg-red-500/90',
+            info: 'bg-blue-500/90',
+            warning: 'bg-yellow-500/90 text-black'
+        };
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-exclamation-circle',
+            info: 'fa-info-circle',
+            warning: 'fa-exclamation-triangle'
+        };
+
+        const toast = document.createElement('div');
+        toast.className = `${colors[type] || colors.info} text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 transition-all duration-300`;
+        if (type === 'warning') {
+            toast.className = toast.className.replace('text-white', 'text-black');
+        }
+        toast.innerHTML = `
+            <i class="fas ${icons[type] || icons.info}"></i>
+            <span>${message}</span>
+            <button onclick="this.parentElement.remove()" class="ml-auto hover:opacity-70">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+
+    // Make showToast globally available
+    window.showToast = showToast;
+    </script>
+
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
