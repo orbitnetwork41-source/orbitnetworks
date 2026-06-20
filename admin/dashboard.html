@@ -7,8 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="../css/style.css" />
-    <link rel="stylesheet" href="../css/admin.css" />
+    <link rel="stylesheet" href="/orbitnetworks/css/style.css" />
+    <link rel="stylesheet" href="/orbitnetworks/css/admin.css" />
 </head>
 <body>
     <!-- Admin Layout -->
@@ -28,41 +28,41 @@
             </div>
 
             <nav class="p-4 space-y-1">
-                <a href="/orbitnetworks/admin/dashboard.html" class="admin-nav-link active">
+                <a href="#admin-dashboard" class="admin-nav-link active" data-page="dashboard">
                     <i class="fas fa-home"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="/orbitnetworks/admin/customers.html" class="admin-nav-link">
+                <a href="#admin-customers" class="admin-nav-link" data-page="customers">
                     <i class="fas fa-users"></i>
                     <span>Customers</span>
                     <span class="ml-auto bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded-full" id="customerCount">0</span>
                 </a>
-                <a href="/orbitnetworks/admin/packages.html" class="admin-nav-link">
+                <a href="#admin-packages" class="admin-nav-link" data-page="packages">
                     <i class="fas fa-box"></i>
                     <span>Packages</span>
                 </a>
-                <a href="/orbitnetworks/admin/payments.html" class="admin-nav-link">
+                <a href="#admin-payments" class="admin-nav-link" data-page="payments">
                     <i class="fas fa-credit-card"></i>
                     <span>Payments</span>
                 </a>
-                <a href="/orbitnetworks/admin/routers.html" class="admin-nav-link">
+                <a href="#admin-routers" class="admin-nav-link" data-page="routers">
                     <i class="fas fa-router"></i>
                     <span>Routers</span>
                 </a>
-                <a href="/orbitnetworks/admin/hotspot.html" class="admin-nav-link">
+                <a href="#admin-hotspot" class="admin-nav-link" data-page="hotspot">
                     <i class="fas fa-wifi"></i>
                     <span>Hotspot</span>
                     <span class="ml-auto bg-green-500/20 text-green-400 text-xs px-2 py-0.5 rounded-full">Live</span>
                 </a>
-                <a href="/orbitnetworks/admin/pppoe.html" class="admin-nav-link">
+                <a href="#admin-pppoe" class="admin-nav-link" data-page="pppoe">
                     <i class="fas fa-network-wired"></i>
                     <span>PPPoE</span>
                 </a>
-                <a href="/orbitnetworks/admin/reports.html" class="admin-nav-link">
+                <a href="#admin-reports" class="admin-nav-link" data-page="reports">
                     <i class="fas fa-chart-bar"></i>
                     <span>Reports</span>
                 </a>
-                <a href="/orbitnetworks/admin/settings.html" class="admin-nav-link">
+                <a href="#admin-settings" class="admin-nav-link" data-page="settings">
                     <i class="fas fa-cog"></i>
                     <span>Settings</span>
                 </a>
@@ -85,18 +85,17 @@
             <!-- Header -->
             <div class="flex justify-between items-center mb-8">
                 <div>
-                    <h1 class="text-3xl font-bold text-white">Dashboard</h1>
-                    <p class="text-gray-400">Welcome back, <span id="adminName">Admin</span>!</p>
+                    <h1 class="text-3xl font-bold text-white" id="pageTitle">Dashboard</h1>
+                    <p class="text-gray-400" id="pageSubtitle">Welcome back, <span id="adminName">Admin</span>!</p>
                 </div>
                 <div class="flex items-center gap-4">
-                    <!-- MikroTik Status Indicator -->
                     <div class="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg">
                         <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse" id="mikrotikStatusDot"></span>
                         <span class="text-xs text-gray-400" id="mikrotikStatus">MikroTik: Connected</span>
                     </div>
                     <button id="notificationBell" class="text-gray-400 hover:text-white transition relative">
                         <i class="fas fa-bell text-xl"></i>
-                        <span id="notificationBadge" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center hidden">0</span>
+                        <span id="notificationBadge" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full hidden">0</span>
                     </button>
                     <button id="refreshBtn" class="text-gray-400 hover:text-white transition">
                         <i class="fas fa-sync-alt text-xl"></i>
@@ -113,216 +112,20 @@
                 </div>
             </div>
 
-            <!-- MikroTik Stats Row -->
-            <div class="grid grid-cols-4 md:grid-cols-6 gap-4 mb-8">
-                <div class="admin-stat-mini border-l-4 border-blue-500">
-                    <p class="text-xs text-gray-400">Hotspot Users</p>
-                    <p class="text-lg font-bold text-white" id="hotspotUsers">0</p>
-                </div>
-                <div class="admin-stat-mini border-l-4 border-green-500">
-                    <p class="text-xs text-gray-400">PPPoE Active</p>
-                    <p class="text-lg font-bold text-white" id="pppoeActive">0</p>
-                </div>
-                <div class="admin-stat-mini border-l-4 border-yellow-500">
-                    <p class="text-xs text-gray-400">Routers Online</p>
-                    <p class="text-lg font-bold text-white" id="routerCount">0</p>
-                </div>
-                <div class="admin-stat-mini border-l-4 border-purple-500">
-                    <p class="text-xs text-gray-400">Bandwidth Used</p>
-                    <p class="text-lg font-bold text-white" id="bandwidthUsed">0 Mbps</p>
-                </div>
-                <div class="admin-stat-mini border-l-4 border-emerald-500">
-                    <p class="text-xs text-gray-400">Wallet</p>
-                    <p class="text-lg font-bold text-emerald-400" id="walletBalance">KES 0</p>
-                </div>
-                <div class="admin-stat-mini border-l-4 border-orange-500">
-                    <p class="text-xs text-gray-400">Success Rate</p>
-                    <p class="text-lg font-bold text-orange-400" id="successRate">0%</p>
-                </div>
-            </div>
-
-            <!-- Stats Grid -->
-            <div class="grid md:grid-cols-4 gap-6 mb-8">
-                <div class="admin-stat-card">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-400">Total Customers</p>
-                            <p class="text-2xl font-bold text-white" id="totalCustomers">0</p>
-                            <p class="text-xs text-green-400" id="customerGrowth">+0% this month</p>
-                        </div>
-                        <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-users text-blue-400 text-xl"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="admin-stat-card">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-400">Revenue (Month)</p>
-                            <p class="text-2xl font-bold text-green-400" id="monthlyRevenue">KES 0</p>
-                            <p class="text-xs text-green-400" id="revenueGrowth">↑ 0% from last month</p>
-                        </div>
-                        <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-money-bill-wave text-green-400 text-xl"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="admin-stat-card">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-400">Active Users</p>
-                            <p class="text-2xl font-bold text-purple-400" id="activeUsers">0</p>
-                            <p class="text-xs text-green-400">Currently online</p>
-                        </div>
-                        <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-wifi text-purple-400 text-xl"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="admin-stat-card">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-400">Routers Online</p>
-                            <p class="text-2xl font-bold text-cyan-400" id="routersOnline">0</p>
-                            <p class="text-xs text-green-400">All systems operational</p>
-                        </div>
-                        <div class="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-router text-cyan-400 text-xl"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Module Stats Row -->
-            <div class="grid grid-cols-4 md:grid-cols-8 gap-4 mb-8">
-                <div class="admin-stat-mini">
-                    <p class="text-xs text-gray-400">Tickets</p>
-                    <p class="text-lg font-bold text-yellow-400" id="openTickets">0</p>
-                </div>
-                <div class="admin-stat-mini">
-                    <p class="text-xs text-gray-400">Invoices</p>
-                    <p class="text-lg font-bold text-orange-400" id="pendingInvoices">0</p>
-                </div>
-                <div class="admin-stat-mini">
-                    <p class="text-xs text-gray-400">SMS Sent</p>
-                    <p class="text-lg font-bold text-blue-400" id="smsSent">0</p>
-                </div>
-                <div class="admin-stat-mini">
-                    <p class="text-xs text-gray-400">Referrals</p>
-                    <p class="text-lg font-bold text-pink-400" id="referrals">0</p>
-                </div>
-                <div class="admin-stat-mini">
-                    <p class="text-xs text-gray-400">Vouchers</p>
-                    <p class="text-lg font-bold text-purple-400" id="vouchersActive">0</p>
-                </div>
-                <div class="admin-stat-mini">
-                    <p class="text-xs text-gray-400">Staff</p>
-                    <p class="text-lg font-bold text-cyan-400" id="totalStaff">0</p>
-                </div>
-                <div class="admin-stat-mini">
-                    <p class="text-xs text-gray-400">Hotspot Sessions</p>
-                    <p class="text-lg font-bold text-emerald-400" id="hotspotSessions">0</p>
-                </div>
-                <div class="admin-stat-mini">
-                    <p class="text-xs text-gray-400">PPPoE Active</p>
-                    <p class="text-lg font-bold text-blue-400" id="pppoeActiveCount">0</p>
-                </div>
-            </div>
-
-            <!-- Charts -->
-            <div class="grid lg:grid-cols-2 gap-8 mb-8">
-                <div class="admin-chart-card">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-white">Revenue Overview</h3>
-                        <select id="revenuePeriod" class="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-white text-sm">
-                            <option value="7">Last 7 Days</option>
-                            <option value="30" selected>Last 30 Days</option>
-                            <option value="90">Last 90 Days</option>
-                        </select>
-                    </div>
-                    <canvas id="revenueChart" height="250"></canvas>
-                </div>
-
-                <div class="admin-chart-card">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-white">Package Distribution</h3>
-                    </div>
-                    <canvas id="packageChart" height="250"></canvas>
-                </div>
-            </div>
-
-            <!-- MikroTik Hotspot Live Stats -->
-            <div class="grid lg:grid-cols-2 gap-8 mb-8">
-                <div class="admin-chart-card">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-white">Hotspot Active Users</h3>
-                        <span class="text-xs text-green-400 animate-pulse">● Live</span>
-                    </div>
-                    <canvas id="hotspotChart" height="250"></canvas>
-                </div>
-
-                <div class="admin-chart-card">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-white">Bandwidth Usage</h3>
-                        <span class="text-xs text-cyan-400">Real-time</span>
-                    </div>
-                    <canvas id="bandwidthChart" height="250"></canvas>
-                </div>
-            </div>
-
-            <!-- Recent Activity & Quick Actions -->
-            <div class="grid lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 admin-activity-card">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-white">Recent Activity</h3>
-                        <a href="#" class="text-sm text-blue-400 hover:text-blue-300">View All</a>
-                    </div>
-                    <div id="adminRecentActivity" class="space-y-3">
-                        <!-- Will be populated by JavaScript -->
-                    </div>
-                </div>
-
-                <div class="admin-quick-actions-card">
-                    <h3 class="text-lg font-bold text-white mb-4">Quick Actions</h3>
-                    <div class="space-y-3">
-                        <button onclick="showAddCustomerModal()" class="w-full py-3 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition flex items-center gap-3">
-                            <i class="fas fa-user-plus"></i>
-                            <span>Add Customer</span>
-                        </button>
-                        <button onclick="showAddPackageModal()" class="w-full py-3 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition flex items-center gap-3">
-                            <i class="fas fa-plus-circle"></i>
-                            <span>Create Package</span>
-                        </button>
-                        <button onclick="showRecordPaymentModal()" class="w-full py-3 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition flex items-center gap-3">
-                            <i class="fas fa-hand-holding-usd"></i>
-                            <span>Record Payment</span>
-                        </button>
-                        <button onclick="showAddRouterModal()" class="w-full py-3 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition flex items-center gap-3">
-                            <i class="fas fa-plus-circle"></i>
-                            <span>Add Router</span>
-                        </button>
-                        <button onclick="window.location.href='/orbitnetworks/admin/hotspot.html'" class="w-full py-3 bg-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition flex items-center gap-3">
-                            <i class="fas fa-wifi"></i>
-                            <span>Hotspot Manager</span>
-                        </button>
-                        <button onclick="window.location.href='/orbitnetworks/admin/pppoe.html'" class="w-full py-3 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition flex items-center gap-3">
-                            <i class="fas fa-network-wired"></i>
-                            <span>PPPoE Manager</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <!-- PAGE CONTAINERS (SPA) -->
+            <div id="page-dashboard" class="admin-page active"></div>
+            <div id="page-customers" class="admin-page hidden"></div>
+            <div id="page-packages" class="admin-page hidden"></div>
+            <div id="page-payments" class="admin-page hidden"></div>
+            <div id="page-routers" class="admin-page hidden"></div>
+            <div id="page-hotspot" class="admin-page hidden"></div>
+            <div id="page-pppoe" class="admin-page hidden"></div>
+            <div id="page-reports" class="admin-page hidden"></div>
+            <div id="page-settings" class="admin-page hidden"></div>
         </main>
     </div>
 
-    <!-- ============================================================
-    MODALS
-    ============================================================ -->
-
-    <!-- Add Customer Modal -->
+    <!-- MODALS (unchanged) -->
     <div id="addCustomerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
         <div class="bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-6">
@@ -337,21 +140,15 @@
             <form id="addCustomerForm" class="space-y-4">
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Full Name <span class="text-red-400">*</span></label>
-                    <input type="text" id="customerFullName" required
-                           class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="John Doe" />
+                    <input type="text" id="customerFullName" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="John Doe" />
                 </div>
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Phone Number <span class="text-red-400">*</span></label>
-                    <input type="tel" id="customerPhone" required
-                           class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="0712345678" />
+                    <input type="tel" id="customerPhone" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="0712345678" />
                 </div>
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                    <input type="email" id="customerEmail"
-                           class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="john@example.com" />
+                    <input type="email" id="customerEmail" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="john@example.com" />
                 </div>
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Package</label>
@@ -367,8 +164,7 @@
                         <option value="suspended">Suspended</option>
                     </select>
                 </div>
-                <button type="submit" id="submitCustomerBtn"
-                        class="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300">
+                <button type="submit" id="submitCustomerBtn" class="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300">
                     <i class="fas fa-user-plus mr-2"></i> Add Customer
                 </button>
             </form>
@@ -390,36 +186,25 @@
             <form id="addPackageForm" class="space-y-4">
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Package Name <span class="text-red-400">*</span></label>
-                    <input type="text" id="packageName" required
-                           class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="Basic Plan" />
+                    <input type="text" id="packageName" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="Basic Plan" />
                 </div>
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Price (KES) <span class="text-red-400">*</span></label>
-                    <input type="number" id="packagePrice" required step="0.01"
-                           class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="500" />
+                    <input type="number" id="packagePrice" required step="0.01" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="500" />
                 </div>
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Speed (Mbps)</label>
-                    <input type="text" id="packageSpeed"
-                           class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="10 Mbps" />
+                    <input type="text" id="packageSpeed" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="10 Mbps" />
                 </div>
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Data Limit (GB)</label>
-                    <input type="number" id="packageDataLimit"
-                           class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="10" />
+                    <input type="number" id="packageDataLimit" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="10" />
                 </div>
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Validity (Days) <span class="text-red-400">*</span></label>
-                    <input type="number" id="packageValidity" required
-                           class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="30" />
+                    <input type="number" id="packageValidity" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="30" />
                 </div>
-                <button type="submit" id="submitPackageBtn"
-                        class="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300">
+                <button type="submit" id="submitPackageBtn" class="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300">
                     <i class="fas fa-plus-circle mr-2"></i> Create Package
                 </button>
             </form>
@@ -447,9 +232,7 @@
                 </div>
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Amount (KES) <span class="text-red-400">*</span></label>
-                    <input type="number" id="paymentAmount" required step="0.01"
-                           class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="500" />
+                    <input type="number" id="paymentAmount" required step="0.01" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="500" />
                 </div>
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Payment Method</label>
@@ -461,12 +244,9 @@
                 </div>
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Reference</label>
-                    <input type="text" id="paymentReference"
-                           class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="MPESA123456" />
+                    <input type="text" id="paymentReference" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="MPESA123456" />
                 </div>
-                <button type="submit" id="submitPaymentBtn"
-                        class="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-green-500/30 transition-all duration-300">
+                <button type="submit" id="submitPaymentBtn" class="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-green-500/30 transition-all duration-300">
                     <i class="fas fa-hand-holding-usd mr-2"></i> Record Payment
                 </button>
             </form>
@@ -488,36 +268,25 @@
             <form id="addRouterForm" class="space-y-4">
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Router Name <span class="text-red-400">*</span></label>
-                    <input type="text" id="routerName" required
-                           class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="Main Router" />
+                    <input type="text" id="routerName" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="Main Router" />
                 </div>
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">IP Address <span class="text-red-400">*</span></label>
-                    <input type="text" id="routerIP" required
-                           class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="192.168.1.1" />
+                    <input type="text" id="routerIP" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="192.168.1.1" />
                 </div>
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Username</label>
-                    <input type="text" id="routerUsername"
-                           class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="admin" />
+                    <input type="text" id="routerUsername" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="admin" />
                 </div>
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
-                    <input type="password" id="routerPassword"
-                           class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="••••••••" />
+                    <input type="password" id="routerPassword" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="••••••••" />
                 </div>
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Location</label>
-                    <input type="text" id="routerLocation"
-                           class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="Nairobi" />
+                    <input type="text" id="routerLocation" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="Nairobi" />
                 </div>
-                <button type="submit" id="submitRouterBtn"
-                        class="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300">
+                <button type="submit" id="submitRouterBtn" class="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300">
                     <i class="fas fa-plus-circle mr-2"></i> Add Router
                 </button>
             </form>
@@ -531,6 +300,6 @@
         }
     }
     </script>
-    <script type="module" src="../js/admin/dashboard.js"></script>
+    <script type="module" src="/orbitnetworks/js/admin/dashboard.js"></script>
 </body>
 </html>
