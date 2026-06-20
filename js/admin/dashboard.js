@@ -1,9 +1,17 @@
 // js/admin/dashboard.js
-// COMPLETE ADMIN DASHBOARD WITH AUTH SERVICE
+// COMPLETE ADMIN DASHBOARD - ALL MODULES INTEGRATED
 
 import { supabase } from '../config/supabase.js';
 import { AuthService } from '../services/auth.service.js';
-import { showToast, formatCurrency, formatDate, getTimeAgo, getInitials } from '../utils/helpers.js';
+import { 
+    showToast, 
+    formatCurrency, 
+    formatDate, 
+    getTimeAgo, 
+    getInitials,
+    truncateText,
+    generateId 
+} from '../utils/helpers.js';
 
 // ============================================
 // IMPORT ALL MODULES
@@ -19,7 +27,7 @@ import { generateVouchers, getVoucherStats, loadVouchers, redeemVoucher } from '
 import { sendWhatsAppMessage, getWhatsAppStats } from './modules/whatsapp.js';
 
 // ============================================
-// AUTH CHECK - Using AuthService
+// AUTH CHECK
 // ============================================
 if (!AuthService.isAuthenticated()) {
     console.log('🔒 Not authenticated, redirecting to login...');
@@ -383,7 +391,7 @@ async function loadRecentActivity() {
                 icon: 'fa-ticket',
                 color: 'text-yellow-400',
                 bg: 'bg-yellow-500/20',
-                title: `New ticket: ${t.subject}`,
+                title: `New ticket: ${truncateText(t.subject, 30)}`,
                 description: t.customers?.profiles?.full_name || 'Customer',
                 time: getTimeAgo(new Date(t.created_at)),
                 timestamp: t.created_at
@@ -731,7 +739,6 @@ function setupEventListeners() {
 
     // Notification bell
     DOM.notificationBell?.addEventListener('click', () => {
-        // Open notification panel
         showNotificationPanel();
     });
 }
@@ -756,7 +763,6 @@ function startAutoRefresh() {
 // UTILITY FUNCTIONS
 // ============================================
 function showLoadingState() {
-    // Show loading skeleton or spinner
     const container = DOM.recentActivity;
     if (container) {
         container.innerHTML = `
@@ -776,8 +782,8 @@ function showLoadingState() {
 }
 
 function showNotificationPanel() {
-    // Create a notification panel
-    showToast('📬 You have ' + (DOM.notificationBadge?.textContent || '0') + ' unread notifications', 'info');
+    const count = DOM.notificationBadge?.textContent || '0';
+    showToast(`📬 You have ${count} unread notifications`, 'info');
 }
 
 // ============================================
