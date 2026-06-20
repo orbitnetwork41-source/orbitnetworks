@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Orbit Networks - WiFi Billing</title>
+  <title>Orbit Networks - Customer Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -296,9 +296,6 @@
     </style>
 </head>
 <body>
-    <!-- ============================================================
-    LOGIN PAGE
-    ============================================================ -->
     <div id="loginPage" class="min-h-screen flex items-center justify-center">
         <div class="login-card bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
             <div class="text-center mb-8">
@@ -306,15 +303,15 @@
                     <i class="fas fa-satellite-dish text-3xl text-white"></i>
                 </div>
                 <h1 class="text-3xl font-bold text-white">Orbit Networks</h1>
-                <p class="text-gray-400 mt-2">WiFi Billing & Management</p>
+                <p class="text-gray-400 mt-2">Customer Portal</p>
             </div>
 
             <form id="loginForm" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                    <input type="email" id="email" required
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Email or Phone</label>
+                    <input type="text" id="email" required
                            class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                           placeholder="admin@orbitnetworks.ke" />
+                           placeholder="john@example.com or 0712345678" />
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
@@ -329,121 +326,23 @@
                 <div id="loginError" class="text-red-400 text-sm text-center hidden"></div>
             </form>
 
+            <!-- Admin Login Link -->
+            <div class="text-center mt-4">
+                <a href="/orbitnetworks/admin/login.html" class="text-sm text-purple-400 hover:text-purple-300 transition">
+                    <i class="fas fa-shield-alt mr-1"></i> Admin Login
+                </a>
+                <span class="text-gray-600 mx-2">|</span>
+                <a href="#" class="text-sm text-blue-400 hover:text-blue-300 transition">
+                    Forgot Password?
+                </a>
+            </div>
+
             <p class="text-center text-gray-400 text-sm mt-6">
                 &copy; 2026 Orbit Networks. All rights reserved.
             </p>
         </div>
     </div>
 
-    <!-- ============================================================
-    MAIN APP
-    ============================================================ -->
-    <div id="app" class="hidden">
-        <!-- SIDEBAR -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-satellite-dish text-blue-400 text-2xl"></i>
-                        <span class="text-xl font-bold text-white">Orbit</span>
-                    </div>
-                    <!-- Theme Toggle in Sidebar -->
-                    <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
-                        <span class="toggle-icon sun"><i class="fas fa-sun"></i></span>
-                        <span class="toggle-icon moon"><i class="fas fa-moon"></i></span>
-                        <span class="toggle-thumb" id="toggleThumb">
-                            <i class="fas fa-moon" id="toggleIcon" style="font-size: 9px;"></i>
-                        </span>
-                    </div>
-                </div>
-                <div class="mt-4 pt-4 border-t border-white/10">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm" id="userAvatar">A</div>
-                        <div>
-                            <p class="text-sm text-white font-medium" id="userName">Admin</p>
-                            <p class="text-xs text-gray-400" id="userRole">Administrator</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="#dashboard" class="nav-link active" data-page="dashboard">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="#customers" class="nav-link" data-page="customers">
-                    <i class="fas fa-users"></i>
-                    <span>Customers</span>
-                    <span class="ml-auto bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded-full" id="customerCount">0</span>
-                </a>
-                <a href="#packages" class="nav-link" data-page="packages">
-                    <i class="fas fa-box"></i>
-                    <span>Packages</span>
-                </a>
-                <a href="#payments" class="nav-link" data-page="payments">
-                    <i class="fas fa-credit-card"></i>
-                    <span>Payments</span>
-                </a>
-                <a href="#routers" class="nav-link" data-page="routers">
-                    <i class="fas fa-router"></i>
-                    <span>Routers</span>
-                </a>
-                <a href="#reports" class="nav-link" data-page="reports">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Reports</span>
-                </a>
-                <a href="#settings" class="nav-link" data-page="settings">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
-            </nav>
-            <div class="sidebar-footer">
-                <button id="logoutBtn" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </button>
-            </div>
-        </aside>
-
-        <!-- MAIN CONTENT -->
-        <main class="content">
-            <!-- Top Bar -->
-            <div class="topbar">
-                <div>
-                    <h1 class="text-2xl font-bold" id="pageTitle">Dashboard</h1>
-                    <p class="text-sm text-gray-400" id="pageSubtitle">Welcome back, <span id="adminName">Admin</span>!</p>
-                </div>
-                <div class="flex items-center gap-4">
-                    <button id="refreshBtn" class="topbar-btn" title="Refresh">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                    <button id="notificationBell" class="topbar-btn relative" title="Notifications">
-                        <i class="fas fa-bell"></i>
-                        <span id="notificationBadge" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center hidden">0</span>
-                    </button>
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                        <span class="font-bold text-sm text-white" id="topbarAvatar">SA</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pages -->
-            <div id="dashboardPage" class="page-content active"></div>
-            <div id="customersPage" class="page-content hidden"></div>
-            <div id="packagesPage" class="page-content hidden"></div>
-            <div id="paymentsPage" class="page-content hidden"></div>
-            <div id="routersPage" class="page-content hidden"></div>
-            <div id="reportsPage" class="page-content hidden"></div>
-            <div id="settingsPage" class="page-content hidden"></div>
-        </main>
-    </div>
-
-    <!-- TOAST CONTAINER -->
-    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
-
-    <!-- ============================================================
-    SCRIPTS
-    ============================================================ -->
     <script type="importmap">
     {
         "imports": {
@@ -451,85 +350,6 @@
         }
     }
     </script>
-
-    <script>
-    // ============================================================
-    // THEME TOGGLE
-    // ============================================================
-    function toggleTheme() {
-        const html = document.documentElement;
-        const current = html.getAttribute('data-theme');
-        const newTheme = current === 'dark' ? 'light' : 'dark';
-        html.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        updateThemeUI(newTheme);
-    }
-
-    function updateThemeUI(theme) {
-        const toggle = document.getElementById('themeToggle');
-        const thumb = document.getElementById('toggleThumb');
-        const icon = document.getElementById('toggleIcon');
-
-        if (theme === 'light') {
-            toggle.classList.add('light');
-            icon.className = 'fas fa-sun';
-            icon.style.color = '#fbbf24';
-        } else {
-            toggle.classList.remove('light');
-            icon.className = 'fas fa-moon';
-            icon.style.color = '#94a3b8';
-        }
-    }
-
-    // Load saved theme
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeUI(savedTheme);
-
-    // ============================================================
-    // TOAST HELPER (for non-module scripts)
-    // ============================================================
-    function showToast(message, type = 'info') {
-        const container = document.getElementById('toastContainer');
-        const colors = {
-            success: 'bg-green-500/90',
-            error: 'bg-red-500/90',
-            info: 'bg-blue-500/90',
-            warning: 'bg-yellow-500/90 text-black'
-        };
-        const icons = {
-            success: 'fa-check-circle',
-            error: 'fa-exclamation-circle',
-            info: 'fa-info-circle',
-            warning: 'fa-exclamation-triangle'
-        };
-
-        const toast = document.createElement('div');
-        toast.className = `${colors[type] || colors.info} text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 transition-all duration-300`;
-        if (type === 'warning') {
-            toast.className = toast.className.replace('text-white', 'text-black');
-        }
-        toast.innerHTML = `
-            <i class="fas ${icons[type] || icons.info}"></i>
-            <span>${message}</span>
-            <button onclick="this.parentElement.remove()" class="ml-auto hover:opacity-70">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-
-        container.appendChild(toast);
-
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateX(100%)';
-            setTimeout(() => toast.remove(), 300);
-        }, 4000);
-    }
-
-    // Make showToast globally available
-    window.showToast = showToast;
-    </script>
-
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
