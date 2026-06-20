@@ -27,10 +27,10 @@ import { generateVouchers, getVoucherStats, loadVouchers, redeemVoucher } from '
 import { sendWhatsAppMessage, getWhatsAppStats } from './whatsapp.js';
 
 // ============================================
-// MIKROTIK API CONFIGURATION
+// MIKROTIK API CONFIGURATION - FIXED
 // ============================================
 const MIKROTIK = {
-    baseUrl: import.meta.env.VITE_MIKROTIK_API_URL || '/api/mikrotik',
+    baseUrl: '/api/mikrotik', // Use relative path, not env var
     timeout: 10000,
     status: 'disconnected',
     stats: {
@@ -40,6 +40,93 @@ const MIKROTIK = {
         routerCount: 0
     }
 };
+
+// Check if MikroTik API is available
+async function checkMikroTikAvailability() {
+    try {
+        const response = await fetch(`${MIKROTIK.baseUrl}/health`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(3000)
+        });
+        return response.ok;
+    } catch {
+        return false;
+    }
+}
+
+// Updated fetchMikroTikStats with better error handling
+async function fetchMikroTikStats() {
+    try {
+        // First check if API is available
+        const isAvailable = await checkMikroTikAvailability();
+        
+        if (!isAvailable) {
+            console.warn('MikroTik API not available, using simulated data');
+            MIKROTIK.status = 'disconnected';
+            updateMikroTikStatus(false);
+            // Return simulated data
+            return {
+                hotspotUsers: Math.floor(Math.random() * 30) + 5,
+                pppoeActive: Math.floor(Math.random() * 20) + 3,
+                bandwidthUsed: Math.floor(Math.random() * 100) + 10,
+                routerCount: Math.floor(Math.random() * 5) + 1
+            };
+        }
+
+        const response = await fetch(`${MIKROTIK.baseUrl}/stats`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('mikrotik_token') || ''}`
+            },
+            signal: AbortSignal.timeout(MIKROTIK.timeout)
+        });
+
+        if (!response.ok) {
+            throw new Error('MikroTik API error');
+        }
+
+        const data = await response.json();
+        
+        MIKROTIK.status = 'connected';
+        MIKROTIK.stats = {
+            hotspotUsers: data.hotspot_active || 0,
+            pppoeActive: data.pppoe_active || 0,
+            bandwidthUsed: data.bandwidth_used || 0,
+            routerCount: data.routers_online || 0
+        };
+
+        updateMikroTikStatus(true);
+        return MIKROTIK.stats;
+
+    } catch (error) {
+        console.warn('MikroTik API error:', error.message);
+        MIKROTIK.status = 'disconnected';
+        updateMikroTikStatus(false);
+        // Return simulated data for demo
+        return {
+            hotspotUsers: Math.floor(Math.random() * 30) + 5,
+            pppoeActive: Math.floor(Math.random() * 20) + 3,
+            bandwidthUsed: Math.floor(Math.random() * 100) + 10,
+            routerCount: Math.floor(Math.random() * 5) + 1
+        };
+    }
+}
+
+function updateMikroTikStatus(connected) {
+    const statusText = DOM.mikrotikStatus;
+    const statusDot = DOM.mikrotikStatusDot;
+    
+    if (!statusText || !statusDot) return;
+    
+    if (connected) {
+        statusText.textContent = 'MikroTik: Connected';
+        statusDot.className = 'w-2 h-2 bg-green-400 rounded-full animate-pulse';
+    } else {
+        statusText.textContent = 'MikroTik: Simulated';
+        statusDot.className = 'w-2 h-2 bg-yellow-400 rounded-full';
+    }
+}
 
 // ============================================
 // AUTH CHECK
