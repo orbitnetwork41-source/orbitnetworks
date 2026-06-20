@@ -1,4 +1,4 @@
-// js/admin/notifications.js
+// js/admin/notifications.js 
 import { supabase } from '../config/supabase.js';
 import { showToast } from '../utils/helpers.js';
 
