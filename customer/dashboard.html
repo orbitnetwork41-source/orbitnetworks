@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Customer Dashboard - Orbit Networks</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" href="../css/customer.css" />
+</head>
+<body>
+    <!-- Customer Portal -->
+    <div class="min-h-screen bg-[#0f0f1a]">
+        <!-- Top Navigation -->
+        <nav class="bg-[#1a1a2e] border-b border-white/5 px-6 py-4">
+            <div class="container mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-satellite-dish text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-white">Orbit Networks</h1>
+                        <p class="text-xs text-gray-400">Customer Portal</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <!-- Notifications -->
+                    <button class="relative text-gray-400 hover:text-white transition">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                    </button>
+                    <!-- User Menu -->
+                    <div class="relative">
+                        <button id="userMenuBtn" class="flex items-center gap-3 text-white hover:text-gray-300 transition">
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                <span class="font-bold text-sm" id="userInitial">JD</span>
+                            </div>
+                            <span id="userName">John Doe</span>
+                            <i class="fas fa-chevron-down text-sm"></i>
+                        </button>
+                        <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-[#1a1a2e] rounded-xl border border-white/10 shadow-xl py-2">
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
+                                <i class="fas fa-user mr-2"></i> Profile
+                            </a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
+                                <i class="fas fa-cog mr-2"></i> Settings
+                            </a>
+                            <hr class="my-2 border-white/5" />
+                            <button id="logoutBtn" class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition">
+                                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mx-auto px-6 py-8">
+            <!-- Welcome Banner -->
+            <div class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl p-8 mb-8 border border-blue-500/20">
+                <h2 class="text-3xl font-bold text-white mb-2">Welcome back, <span id="welcomeName">John</span>!</h2>
+                <p class="text-gray-400">Your internet is active and running smoothly.</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-[#1a1a2e] rounded-2xl p-6 border border-white/5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-400">Data Used</p>
+                            <p class="text-2xl font-bold text-white" id="dataUsed">12.5 GB</p>
+                            <p class="text-xs text-gray-400">of <span id="dataLimit">50 GB</span></p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-database text-blue-400 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 bg-white/5 rounded-full h-2 overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" style="width: 25%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-[#1a1a2e] rounded-2xl p-6 border border-white/5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-400">Package</p>
+                            <p class="text-2xl font-bold text-white" id="currentPackage">Premium</p>
+                            <p class="text-xs text-gray-400">Expires: <span id="expiryDate">2026-07-15</span></p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-box text-purple-400 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-[#1a1a2e] rounded-2xl p-6 border border-white/5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-400">Wallet Balance</p>
+                            <p class="text-2xl font-bold text-green-400" id="walletBalance">KES 1,250</p>
+                            <p class="text-xs text-gray-400">Last top-up: <span id="lastTopup">2 days ago</span></p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-wallet text-green-400 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-[#1a1a2e] rounded-2xl p-6 border border-white/5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-400">Status</p>
+                            <p class="text-2xl font-bold text-green-400" id="connectionStatus">Active</p>
+                            <p class="text-xs text-gray-400">Speed: <span id="currentSpeed">10 Mbps</span></p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-wifi text-green-400 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+                <a href="packages.html" class="group bg-[#1a1a2e] rounded-2xl p-6 border border-white/5 hover:border-blue-500/30 transition-all">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
+                            <i class="fas fa-shopping-cart text-blue-400 text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Buy Package</h3>
+                            <p class="text-sm text-gray-400">Purchase new internet plan</p>
+                        </div>
+                        <i class="fas fa-arrow-right text-gray-400 ml-auto group-hover:text-blue-400 transition"></i>
+                    </div>
+                </a>
+
+                <a href="wallet.html" class="group bg-[#1a1a2e] rounded-2xl p-6 border border-white/5 hover:border-green-500/30 transition-all">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-green-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
+                            <i class="fas fa-coins text-green-400 text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Top Up Wallet</h3>
+                            <p class="text-sm text-gray-400">Add funds to your account</p>
+                        </div>
+                        <i class="fas fa-arrow-right text-gray-400 ml-auto group-hover:text-green-400 transition"></i>
+                    </div>
+                </a>
+
+                <a href="support.html" class="group bg-[#1a1a2e] rounded-2xl p-6 border border-white/5 hover:border-purple-500/30 transition-all">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
+                            <i class="fas fa-headset text-purple-400 text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Support</h3>
+                            <p class="text-sm text-gray-400">Get help from our team</p>
+                        </div>
+                        <i class="fas fa-arrow-right text-gray-400 ml-auto group-hover:text-purple-400 transition"></i>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="bg-[#1a1a2e] rounded-2xl p-6 border border-white/5">
+                <h3 class="text-lg font-bold text-white mb-4">Recent Activity</h3>
+                <div id="recentActivity" class="space-y-4">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+        }
+    }
+    </script>
+    <script type="module" src="../js/customer/dashboard.js"></script>
+</body>
+</html>
