@@ -1,5 +1,5 @@
 // js/admin/sms.js
-import { supabase } from '../config/supabase.js';
+import { supabase } from '../config/supabase.js'; 
 import { showToast } from '../utils/helpers.js';
 
 export async function sendBulkSMS(recipients, message) {
