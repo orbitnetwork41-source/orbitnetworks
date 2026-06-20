@@ -1,5 +1,5 @@
 // js/app.js
-// COMPLETE APP WITH AUTH SERVICE, HELPERS & ADMIN INTEGRATION
+// COMPLETE APP WITH AUTH SERVICE AND HELPERS
 
 import { supabase } from './config/supabase.js';
 import { AuthService } from './services/auth.service.js';
@@ -33,7 +33,7 @@ const userAvatar = document.getElementById('userAvatar');
 const userRole = document.getElementById('userRole');
 
 // ============================================
-// AUTH FUNCTIONS (using AuthService)
+// AUTH FUNCTIONS
 // ============================================
 async function login(email, password) {
     try {
@@ -41,7 +41,7 @@ async function login(email, password) {
         
         if (result.success) {
             currentUser = result.user;
-            return { success: true, user: currentUser };
+            return { success: true, user: currentUser, role: result.role };
         } else {
             return { success: false, error: result.error };
         }
@@ -51,7 +51,7 @@ async function login(email, password) {
 }
 
 async function logout() {
-    AuthService.logout();
+    await AuthService.logout();
     currentUser = null;
     showApp(false);
     if (refreshInterval) {
@@ -79,6 +79,10 @@ function isAdmin() {
     return AuthService.isAdmin();
 }
 
+function getUserRole() {
+    return AuthService.getUserRole();
+}
+
 // ============================================
 // UI FUNCTIONS
 // ============================================
@@ -88,13 +92,16 @@ function showApp(show) {
         app.classList.remove('hidden');
         const user = getCurrentUser();
         if (user) {
-            const name = user.profile?.full_name || user.email?.split('@')[0] || 'Admin';
+            const name = user.profile?.full_name || user.email?.split('@')[0] || 'User';
             const initials = getInitials(name);
-            const role = user.profile?.role || 'Administrator';
+            const role = user.profile?.role || 'customer';
             
             userName.textContent = name;
             if (userAvatar) userAvatar.textContent = initials;
             if (userRole) userRole.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+            
+            // Show/hide admin link
+            updateAdminLink();
         }
     } else {
         loginPage.style.display = 'flex';
@@ -102,6 +109,20 @@ function showApp(show) {
     }
 }
 
+// ============================================
+// SHOW/HIDE ADMIN LINK
+// ============================================
+function updateAdminLink() {
+    const adminLink = document.getElementById('adminPanelLink');
+    if (adminLink) {
+        const isAdmin = AuthService.isAdmin();
+        adminLink.style.display = isAdmin ? 'flex' : 'none';
+    }
+}
+
+// ============================================
+// NAVIGATION
+// ============================================
 window.navigateTo = function(page) {
     // Hide all pages
     document.querySelectorAll('.page-content').forEach(p => {
@@ -151,7 +172,7 @@ window.navigateTo = function(page) {
             break;
         case 'admin':
             // Redirect to admin dashboard
-            window.location.href = '/admin/dashboard.html';
+            window.location.href = '/orbitnetworks/admin/dashboard.html';
             break;
     }
 };
@@ -227,7 +248,7 @@ async function loadDashboard() {
             <div class="page-header">
                 <h1>Dashboard</h1>
                 <span class="text-gray-400 text-sm" id="currentTime"></span>
-                ${admin ? `<a href="/admin/dashboard.html" class="btn-primary text-sm px-4 py-2">Go to Admin Panel</a>` : ''}
+                ${admin ? `<a href="/orbitnetworks/admin/dashboard.html" class="btn-primary text-sm px-4 py-2">Go to Admin Panel</a>` : ''}
             </div>
             
             <div class="stats-grid">
@@ -330,7 +351,7 @@ async function loadDashboard() {
         
         updateTime();
         
-        // Start auto-refresh for dashboard
+        // Start auto-refresh
         if (refreshInterval) {
             clearInterval(refreshInterval);
         }
@@ -529,7 +550,7 @@ async function loadPackages() {
             </div>
         `;
         
-        // Update package count on dashboard
+        // Update package count
         const pkgCount = document.getElementById('totalPackages');
         if (pkgCount) pkgCount.textContent = data?.length || 0;
         
@@ -873,7 +894,7 @@ function updateTime() {
 }
 
 // ============================================
-// NAVIGATION
+// NAVIGATION SETUP
 // ============================================
 document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', (e) => {
@@ -885,7 +906,7 @@ document.querySelectorAll('.nav-link').forEach(link => {
 });
 
 // ============================================
-// LOGIN
+// LOGIN HANDLER
 // ============================================
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -898,6 +919,12 @@ loginForm.addEventListener('submit', async (e) => {
     const result = await login(email, password);
     
     if (result.success) {
+        // Check if user is admin
+        if (AuthService.isAdmin()) {
+            window.location.href = '/orbitnetworks/admin/dashboard.html';
+            return;
+        }
+        
         showToast('Welcome back!', 'success');
         showApp(true);
         window.navigateTo('dashboard');
@@ -919,6 +946,12 @@ logoutBtn.addEventListener('click', logout);
 // INIT
 // ============================================
 if (isAuthenticated()) {
+    // Check if admin - redirect to admin dashboard
+    if (AuthService.isAdmin()) {
+        window.location.href = '/orbitnetworks/admin/dashboard.html';
+        return;
+    }
+    
     showApp(true);
     const hash = window.location.hash.replace('#', '');
     if (hash) {
@@ -939,3 +972,4 @@ window.addEventListener('popstate', () => {
 
 console.log('🚀 Orbit Networks is ready!');
 console.log(`📦 Helpers loaded: showToast, getTimeAgo, formatCurrency, formatDate, getInitials`);
+console.log(`👤 User role: ${AuthService.getUserRole()}`);
