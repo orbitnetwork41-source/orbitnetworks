@@ -1,5 +1,5 @@
 // js/admin/dashboard.js
-// COMPLETE ADMIN DASHBOARD - ALL MODULES INTEGRATED
+// COMPLETE ADMIN DASHBOARD - MIKROTIK INTEGRATION + ALL MODULES
 
 import { supabase } from '../config/supabase.js';
 import { AuthService } from '../services/auth.service.js';
@@ -25,6 +25,21 @@ import { sendBulkSMS, getSMSStats, loadSMSLogs, sendSingleSMS } from './modules/
 import { loadStaff, updateStaffRole, getStaffStats } from './modules/staff.js';
 import { generateVouchers, getVoucherStats, loadVouchers, redeemVoucher } from './modules/vouchers.js';
 import { sendWhatsAppMessage, getWhatsAppStats } from './modules/whatsapp.js';
+
+// ============================================
+// MIKROTIK API CONFIGURATION
+// ============================================
+const MIKROTIK = {
+    baseUrl: import.meta.env.VITE_MIKROTIK_API_URL || '/api/mikrotik',
+    timeout: 10000,
+    status: 'disconnected',
+    stats: {
+        hotspotUsers: 0,
+        pppoeActive: 0,
+        bandwidthUsed: 0,
+        routerCount: 0
+    }
+};
 
 // ============================================
 // AUTH CHECK
@@ -62,13 +77,21 @@ const state = {
         vouchersActive: 0,
         totalRevenue: 0,
         successRate: 0,
-        totalStaff: 0
+        totalStaff: 0,
+        // MikroTik specific
+        hotspotUsers: 0,
+        pppoeActive: 0,
+        bandwidthUsed: 0,
+        routerCount: 0,
+        hotspotSessions: 0
     },
     charts: {
         revenue: null,
         package: null,
         wallet: null,
-        activity: null
+        activity: null,
+        hotspot: null,
+        bandwidth: null
     },
     refreshInterval: null,
     data: {
@@ -107,6 +130,16 @@ const DOM = {
     successRate: document.getElementById('successRate'),
     totalStaff: document.getElementById('totalStaff'),
     
+    // MikroTik Stats
+    hotspotUsers: document.getElementById('hotspotUsers'),
+    pppoeActive: document.getElementById('pppoeActive'),
+    bandwidthUsed: document.getElementById('bandwidthUsed'),
+    routerCount: document.getElementById('routerCount'),
+    hotspotSessions: document.getElementById('hotspotSessions'),
+    pppoeActiveCount: document.getElementById('pppoeActiveCount'),
+    mikrotikStatus: document.getElementById('mikrotikStatus'),
+    mikrotikStatusDot: document.getElementById('mikrotikStatusDot'),
+    
     // Activity
     recentActivity: document.getElementById('adminRecentActivity'),
     notificationBell: document.getElementById('notificationBell'),
@@ -117,6 +150,8 @@ const DOM = {
     packageChart: document.getElementById('packageChart'),
     walletChart: document.getElementById('walletChart'),
     activityChart: document.getElementById('activityChart'),
+    hotspotChart: document.getElementById('hotspotChart'),
+    bandwidthChart: document.getElementById('bandwidthChart'),
     
     // Period
     revenuePeriod: document.getElementById('revenuePeriod'),
@@ -140,6 +175,61 @@ function setUserInfo() {
 }
 
 // ============================================
+// MIKROTIK API FUNCTIONS
+// ============================================
+async function fetchMikroTikStats() {
+    try {
+        // Fetch from your MikroTik API endpoint
+        const response = await fetch(`${MIKROTIK.baseUrl}/stats`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('mikrotik_token') || ''}`
+            },
+            signal: AbortSignal.timeout(MIKROTIK.timeout)
+        });
+
+        if (!response.ok) {
+            throw new Error('MikroTik API error');
+        }
+
+        const data = await response.json();
+        
+        MIKROTIK.status = 'connected';
+        MIKROTIK.stats = {
+            hotspotUsers: data.hotspot_active || 0,
+            pppoeActive: data.pppoe_active || 0,
+            bandwidthUsed: data.bandwidth_used || 0,
+            routerCount: data.routers_online || 0
+        };
+
+        updateMikroTikStatus(true);
+        return MIKROTIK.stats;
+
+    } catch (error) {
+        console.warn('MikroTik API error:', error.message);
+        MIKROTIK.status = 'disconnected';
+        updateMikroTikStatus(false);
+        return null;
+    }
+}
+
+function updateMikroTikStatus(connected) {
+    const statusText = DOM.mikrotikStatus;
+    const statusDot = DOM.mikrotikStatusDot;
+    
+    if (!statusText || !statusDot) return;
+    
+    if (connected) {
+        statusText.textContent = 'MikroTik: Connected';
+        statusDot.className = 'w-2 h-2 bg-green-400 rounded-full animate-pulse';
+    } else {
+        statusText.textContent = 'MikroTik: Disconnected';
+        statusDot.className = 'w-2 h-2 bg-red-400 rounded-full';
+    }
+}
+
+// ============================================
 // INITIALIZATION
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
@@ -150,7 +240,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     showLoadingState();
     
     try {
-        // Load ALL dashboard data
+        // Load ALL dashboard data including MikroTik
         await loadAllDashboardData();
         
         // Setup event listeners
@@ -164,6 +254,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         console.log('🚀 Orbit Networks Admin Dashboard ready!');
         console.log(`👤 Logged in as: ${state.currentUser?.profile?.full_name || state.currentUser?.email}`);
+        console.log(`📡 MikroTik Status: ${MIKROTIK.status}`);
         
     } catch (error) {
         console.error('Dashboard initialization error:', error);
@@ -186,7 +277,8 @@ async function loadAllDashboardData() {
             smsStats,
             staffStats,
             voucherStats,
-            notifications
+            notifications,
+            mikrotikStats
         ] = await Promise.all([
             loadStats(),
             loadWalletStats(),
@@ -196,7 +288,8 @@ async function loadAllDashboardData() {
             getSMSStats(),
             getStaffStats(),
             getVoucherStats(),
-            loadNotifications(5)
+            loadNotifications(5),
+            fetchMikroTikStats()
         ]);
 
         // Update state
@@ -209,14 +302,26 @@ async function loadAllDashboardData() {
         state.stats.totalStaff = staffStats.total || 0;
         state.stats.vouchersActive = voucherStats.active || 0;
         
+        // MikroTik stats
+        if (mikrotikStats) {
+            state.stats.hotspotUsers = mikrotikStats.hotspotUsers || 0;
+            state.stats.pppoeActive = mikrotikStats.pppoeActive || 0;
+            state.stats.bandwidthUsed = mikrotikStats.bandwidthUsed || 0;
+            state.stats.routerCount = mikrotikStats.routerCount || 0;
+            state.stats.hotspotSessions = mikrotikStats.hotspotUsers || 0;
+        }
+        
         state.data.notifications = notifications;
 
         // Update UI
         updateStatsUI();
+        updateMikroTikUI();
         await loadRecentActivity();
         await loadRevenueChart(30);
         await loadPackageChart();
         await loadWalletChart();
+        await loadHotspotChart();
+        await loadBandwidthChart();
         
         // Update module-specific data
         state.data.wallet = walletData;
@@ -258,7 +363,7 @@ async function loadStats() {
 
         const monthlyRevenue = payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
 
-        // Routers online
+        // Routers online (from Supabase)
         const { data: routers } = await supabase
             .from('routers')
             .select('status');
@@ -323,6 +428,17 @@ function updateStatsUI() {
     if (DOM.referrals) DOM.referrals.textContent = s.referrals;
     if (DOM.vouchersActive) DOM.vouchersActive.textContent = s.vouchersActive;
     if (DOM.totalStaff) DOM.totalStaff.textContent = s.totalStaff;
+}
+
+function updateMikroTikUI() {
+    const s = state.stats;
+    
+    if (DOM.hotspotUsers) DOM.hotspotUsers.textContent = s.hotspotUsers || 0;
+    if (DOM.pppoeActive) DOM.pppoeActive.textContent = s.pppoeActive || 0;
+    if (DOM.bandwidthUsed) DOM.bandwidthUsed.textContent = `${s.bandwidthUsed || 0} Mbps`;
+    if (DOM.routerCount) DOM.routerCount.textContent = s.routerCount || 0;
+    if (DOM.hotspotSessions) DOM.hotspotSessions.textContent = s.hotspotSessions || 0;
+    if (DOM.pppoeActiveCount) DOM.pppoeActiveCount.textContent = s.pppoeActive || 0;
 }
 
 // ============================================
@@ -702,6 +818,146 @@ async function loadWalletChart() {
 }
 
 // ============================================
+// HOTSPOT CHART
+// ============================================
+let hotspotChartInstance = null;
+
+async function loadHotspotChart() {
+    try {
+        const ctx = DOM.hotspotChart?.getContext('2d');
+        if (!ctx) return;
+
+        if (hotspotChartInstance) {
+            hotspotChartInstance.destroy();
+        }
+
+        // Get hotspot data from Supabase or MikroTik
+        const { data: sessions } = await supabase
+            .from('hotspot_sessions')
+            .select('created_at, status')
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        const labels = ['Active', 'Expired', 'Suspended'];
+        const values = [
+            sessions?.filter(s => s.status === 'active').length || 0,
+            sessions?.filter(s => s.status === 'expired').length || 0,
+            sessions?.filter(s => s.status === 'suspended').length || 0
+        ];
+
+        hotspotChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#34D399', '#F87171', '#FBBF24'],
+                    borderColor: '#0A0E1A',
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#94A3B8',
+                            padding: 20,
+                            font: { size: 12 }
+                        }
+                    }
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error loading hotspot chart:', error);
+    }
+}
+
+// ============================================
+// BANDWIDTH CHART
+// ============================================
+let bandwidthChartInstance = null;
+
+async function loadBandwidthChart() {
+    try {
+        const ctx = DOM.bandwidthChart?.getContext('2d');
+        if (!ctx) return;
+
+        if (bandwidthChartInstance) {
+            bandwidthChartInstance.destroy();
+        }
+
+        // Simulate bandwidth data (replace with real MikroTik data)
+        const labels = ['12AM', '4AM', '8AM', '12PM', '4PM', '8PM', 'Now'];
+        const download = [10, 5, 30, 80, 60, 90, 45];
+        const upload = [5, 2, 15, 40, 30, 45, 20];
+
+        bandwidthChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Download (Mbps)',
+                        data: download,
+                        borderColor: '#0EA5E9',
+                        backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Upload (Mbps)',
+                        data: upload,
+                        borderColor: '#14B8A6',
+                        backgroundColor: 'rgba(20, 184, 166, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#94A3B8',
+                            font: { size: 12 }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            color: '#94A3B8',
+                            callback: (value) => `${value} Mbps`
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#94A3B8'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error loading bandwidth chart:', error);
+    }
+}
+
+// ============================================
 // NOTIFICATIONS
 // ============================================
 async function updateNotificationBadge() {
@@ -752,10 +1008,11 @@ function startAutoRefresh() {
     }
     
     state.refreshInterval = setInterval(() => {
-        // Only refresh stats and activity, not charts (too heavy)
+        // Refresh stats, activity, and MikroTik data
         loadStats();
         loadRecentActivity();
         updateNotificationBadge();
+        fetchMikroTikStats();
     }, 30000); // Every 30 seconds
 }
 
@@ -785,6 +1042,41 @@ function showNotificationPanel() {
     const count = DOM.notificationBadge?.textContent || '0';
     showToast(`📬 You have ${count} unread notifications`, 'info');
 }
+
+// ============================================
+// GLOBAL FUNCTIONS FOR MODALS
+// ============================================
+window.showAddCustomerModal = function() {
+    showToast('Add customer modal coming soon!', 'info');
+};
+
+window.closeAddCustomerModal = function() {
+    // Close modal logic
+};
+
+window.showAddPackageModal = function() {
+    showToast('Add package modal coming soon!', 'info');
+};
+
+window.closeAddPackageModal = function() {
+    // Close modal logic
+};
+
+window.showRecordPaymentModal = function() {
+    showToast('Record payment modal coming soon!', 'info');
+};
+
+window.closeRecordPaymentModal = function() {
+    // Close modal logic
+};
+
+window.showAddRouterModal = function() {
+    showToast('Add router modal coming soon!', 'info');
+};
+
+window.closeAddRouterModal = function() {
+    // Close modal logic
+};
 
 // ============================================
 // EXPOSE MODULES TO WINDOW FOR GLOBAL ACCESS
