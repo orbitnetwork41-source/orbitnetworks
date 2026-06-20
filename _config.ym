@@ -1,0 +1,35 @@
+# GitHub Pages Configuration
+title: Orbit Networks - WiFi Billing System
+description: Modern WiFi billing and management platform for ISPs
+
+# Theme settings
+theme: minima
+
+# Navigation
+header_pages:
+  - index.html
+
+# Social links
+github_username: yourusername
+
+# Build settings
+markdown: kramdown
+plugins:
+  - jekyll-feed
+
+# Exclude files from build
+exclude:
+  - node_modules
+  - .git
+  - .github
+  - README.md
+  - .gitignore
+  - package.json
+  - package-lock.json
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
