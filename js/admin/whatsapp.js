@@ -1,5 +1,5 @@
 // js/admin/whatsapp.js
-import { supabase } from '../config/supabase.js';
+import { supabase } from '../config/supabase.js'; 
 import { showToast } from '../utils/helpers.js';
 
 export async function sendWhatsAppMessage(phone, message) {
