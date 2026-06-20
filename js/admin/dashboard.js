@@ -1,6 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { AuthService } from '../services/auth.service.js';
-import { showToast } from '../utils/helpers.js';
+import { showToast } from '../utils/helpers.js'; 
 
 // Check authentication
 if (!AuthService.isAuthenticated() || !AuthService.isAdmin()) {
