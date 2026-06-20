@@ -1,5 +1,5 @@
 // js/app.js
-// COMPLETE APP WITH AUTH SERVICE AND HELPERS
+// COMPLETE APP WITH AUTH SERVICE, HELPERS & ADMIN INTEGRATION
 
 import { supabase } from './config/supabase.js';
 import { AuthService } from './services/auth.service.js';
@@ -90,10 +90,11 @@ function showApp(show) {
         if (user) {
             const name = user.profile?.full_name || user.email?.split('@')[0] || 'Admin';
             const initials = getInitials(name);
+            const role = user.profile?.role || 'Administrator';
             
             userName.textContent = name;
             if (userAvatar) userAvatar.textContent = initials;
-            if (userRole) userRole.textContent = user.profile?.role || 'User';
+            if (userRole) userRole.textContent = role.charAt(0).toUpperCase() + role.slice(1);
         }
     } else {
         loginPage.style.display = 'flex';
@@ -147,6 +148,10 @@ window.navigateTo = function(page) {
             break;
         case 'settings':
             loadSettings();
+            break;
+        case 'admin':
+            // Redirect to admin dashboard
+            window.location.href = '/admin/dashboard.html';
             break;
     }
 };
@@ -222,6 +227,7 @@ async function loadDashboard() {
             <div class="page-header">
                 <h1>Dashboard</h1>
                 <span class="text-gray-400 text-sm" id="currentTime"></span>
+                ${admin ? `<a href="/admin/dashboard.html" class="btn-primary text-sm px-4 py-2">Go to Admin Panel</a>` : ''}
             </div>
             
             <div class="stats-grid">
@@ -312,6 +318,11 @@ async function loadDashboard() {
                         <button class="btn-primary" onclick="window.navigateTo('routers')">
                             <i class="fas fa-router"></i> Routers
                         </button>
+                        ${admin ? `
+                            <button class="btn-primary bg-gradient-to-r from-purple-500 to-pink-600" onclick="window.navigateTo('admin')">
+                                <i class="fas fa-shield-alt"></i> Admin Panel
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             </div>
