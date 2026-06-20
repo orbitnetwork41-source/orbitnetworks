@@ -1,6 +1,6 @@
 // js/admin/invoices.js
 import { supabase } from '../config/supabase.js'; 
-import { showToast, formatCurrency, formatDate } from '../utils/helpers.js';
+import { showToast, formatCurrency, formatDate } from '../utils/helpers.js'; 
 
 export async function loadInvoices(status = 'all') {
     try {
