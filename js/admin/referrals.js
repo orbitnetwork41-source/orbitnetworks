@@ -1,4 +1,4 @@
-// js/admin/referrals.js
+// js/admin/referrals.js 
 import { supabase } from '../config/supabase.js';
 import { showToast, formatCurrency } from '../utils/helpers.js';
 
