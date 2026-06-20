@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - Orbit Networks</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" href="../css/admin.css" />
+</head>
+<body>
+    <!-- Admin Layout -->
+    <div class="flex min-h-screen bg-[#0f0f1a]">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="p-6 border-b border-white/5">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-satellite-dish text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-white">Orbit</h1>
+                        <p class="text-xs text-gray-400">Admin Panel</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="p-4 space-y-1">
+                <a href="dashboard.html" class="admin-nav-link active">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="customers.html" class="admin-nav-link">
+                    <i class="fas fa-users"></i>
+                    <span>Customers</span>
+                    <span class="ml-auto bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded-full" id="customerCount">0</span>
+                </a>
+                <a href="packages.html" class="admin-nav-link">
+                    <i class="fas fa-box"></i>
+                    <span>Packages</span>
+                </a>
+                <a href="payments.html" class="admin-nav-link">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="routers.html" class="admin-nav-link">
+                    <i class="fas fa-router"></i>
+                    <span>Routers</span>
+                </a>
+                <a href="reports.html" class="admin-nav-link">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="settings.html" class="admin-nav-link">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="p-4 mt-auto border-t border-white/5">
+                <button id="adminLogoutBtn" class="w-full py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition flex items-center justify-center gap-2">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-white">Dashboard</h1>
+                    <p class="text-gray-400">Welcome back, <span id="adminName">Admin</span>!</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button class="text-gray-400 hover:text-white transition relative">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                            <span class="font-bold text-sm text-white">SA</span>
+                        </div>
+                        <div>
+                            <p class="text-white text-sm font-medium">Super Admin</p>
+                            <p class="text-xs text-gray-400">Full Access</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid md:grid-cols-4 gap-6 mb-8">
+                <div class="admin-stat-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-400">Total Customers</p>
+                            <p class="text-2xl font-bold text-white" id="totalCustomers">0</p>
+                            <p class="text-xs text-green-400">+12% this month</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-users text-blue-400 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-stat-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-400">Revenue (Month)</p>
+                            <p class="text-2xl font-bold text-green-400" id="monthlyRevenue">KES 0</p>
+                            <p class="text-xs text-green-400">↑ 8.5% from last month</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-money-bill-wave text-green-400 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-stat-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-400">Active Users</p>
+                            <p class="text-2xl font-bold text-purple-400" id="activeUsers">0</p>
+                            <p class="text-xs text-green-400">Currently online</p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-wifi text-purple-400 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-stat-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-400">Routers Online</p>
+                            <p class="text-2xl font-bold text-cyan-400" id="routersOnline">0</p>
+                            <p class="text-xs text-green-400">All systems operational</p>
+                        </div>
+                        <div class="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-router text-cyan-400 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="grid lg:grid-cols-2 gap-8 mb-8">
+                <div class="admin-chart-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-white">Revenue Overview</h3>
+                        <select id="revenuePeriod" class="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-white text-sm">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30" selected>Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                        </select>
+                    </div>
+                    <canvas id="revenueChart" height="250"></canvas>
+                </div>
+
+                <div class="admin-chart-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-white">Package Distribution</h3>
+                    </div>
+                    <canvas id="packageChart" height="250"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity & Quick Actions -->
+            <div class="grid lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 admin-activity-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-white">Recent Activity</h3>
+                        <a href="#" class="text-sm text-blue-400 hover:text-blue-300">View All</a>
+                    </div>
+                    <div id="adminRecentActivity" class="space-y-3">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <div class="admin-quick-actions-card">
+                    <h3 class="text-lg font-bold text-white mb-4">Quick Actions</h3>
+                    <div class="space-y-3">
+                        <button onclick="window.location.href='customers.html'" class="w-full py-3 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition flex items-center gap-3">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Add Customer</span>
+                        </button>
+                        <button onclick="window.location.href='packages.html'" class="w-full py-3 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition flex items-center gap-3">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Create Package</span>
+                        </button>
+                        <button onclick="window.location.href='payments.html'" class="w-full py-3 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition flex items-center gap-3">
+                            <i class="fas fa-hand-holding-usd"></i>
+                            <span>Record Payment</span>
+                        </button>
+                        <button onclick="window.location.href='routers.html'" class="w-full py-3 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition flex items-center gap-3">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Add Router</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+        }
+    }
+    </script>
+    <script type="module" src="../js/admin/dashboard.js"></script>
+</body>
+</html>
