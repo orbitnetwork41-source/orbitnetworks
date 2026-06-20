@@ -112,20 +112,301 @@
                 </div>
             </div>
 
-            <!-- PAGE CONTAINERS (SPA) -->
-            <div id="page-dashboard" class="admin-page active"></div>
-            <div id="page-customers" class="admin-page hidden"></div>
-            <div id="page-packages" class="admin-page hidden"></div>
-            <div id="page-payments" class="admin-page hidden"></div>
-            <div id="page-routers" class="admin-page hidden"></div>
-            <div id="page-hotspot" class="admin-page hidden"></div>
-            <div id="page-pppoe" class="admin-page hidden"></div>
-            <div id="page-reports" class="admin-page hidden"></div>
-            <div id="page-settings" class="admin-page hidden"></div>
+            <!-- ============================================================
+            PAGE CONTAINERS - SPA
+            ============================================================ -->
+            
+            <!-- DASHBOARD PAGE -->
+            <div id="page-dashboard" class="admin-page active">
+                <!-- MikroTik Stats Row -->
+                <div class="grid grid-cols-4 md:grid-cols-6 gap-4 mb-8">
+                    <div class="admin-stat-mini border-l-4 border-blue-500">
+                        <p class="text-xs text-gray-400">Hotspot Users</p>
+                        <p class="text-lg font-bold text-white" id="hotspotUsers">0</p>
+                    </div>
+                    <div class="admin-stat-mini border-l-4 border-green-500">
+                        <p class="text-xs text-gray-400">PPPoE Active</p>
+                        <p class="text-lg font-bold text-white" id="pppoeActive">0</p>
+                    </div>
+                    <div class="admin-stat-mini border-l-4 border-yellow-500">
+                        <p class="text-xs text-gray-400">Routers Online</p>
+                        <p class="text-lg font-bold text-white" id="routerCount">0</p>
+                    </div>
+                    <div class="admin-stat-mini border-l-4 border-purple-500">
+                        <p class="text-xs text-gray-400">Bandwidth Used</p>
+                        <p class="text-lg font-bold text-white" id="bandwidthUsed">0 Mbps</p>
+                    </div>
+                    <div class="admin-stat-mini border-l-4 border-emerald-500">
+                        <p class="text-xs text-gray-400">Wallet</p>
+                        <p class="text-lg font-bold text-emerald-400" id="walletBalance">KES 0</p>
+                    </div>
+                    <div class="admin-stat-mini border-l-4 border-orange-500">
+                        <p class="text-xs text-gray-400">Success Rate</p>
+                        <p class="text-lg font-bold text-orange-400" id="successRate">0%</p>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid md:grid-cols-4 gap-6 mb-8">
+                    <div class="admin-stat-card">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-400">Total Customers</p>
+                                <p class="text-2xl font-bold text-white" id="totalCustomers">0</p>
+                                <p class="text-xs text-green-400" id="customerGrowth">+0% this month</p>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-users text-blue-400 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-stat-card">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-400">Revenue (Month)</p>
+                                <p class="text-2xl font-bold text-green-400" id="monthlyRevenue">KES 0</p>
+                                <p class="text-xs text-green-400" id="revenueGrowth">↑ 0% from last month</p>
+                            </div>
+                            <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-money-bill-wave text-green-400 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-stat-card">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-400">Active Users</p>
+                                <p class="text-2xl font-bold text-purple-400" id="activeUsers">0</p>
+                                <p class="text-xs text-green-400">Currently online</p>
+                            </div>
+                            <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-wifi text-purple-400 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-stat-card">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-400">Routers Online</p>
+                                <p class="text-2xl font-bold text-cyan-400" id="routersOnline">0</p>
+                                <p class="text-xs text-green-400">All systems operational</p>
+                            </div>
+                            <div class="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-router text-cyan-400 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module Stats Row -->
+                <div class="grid grid-cols-4 md:grid-cols-8 gap-4 mb-8">
+                    <div class="admin-stat-mini">
+                        <p class="text-xs text-gray-400">Tickets</p>
+                        <p class="text-lg font-bold text-yellow-400" id="openTickets">0</p>
+                    </div>
+                    <div class="admin-stat-mini">
+                        <p class="text-xs text-gray-400">Invoices</p>
+                        <p class="text-lg font-bold text-orange-400" id="pendingInvoices">0</p>
+                    </div>
+                    <div class="admin-stat-mini">
+                        <p class="text-xs text-gray-400">SMS Sent</p>
+                        <p class="text-lg font-bold text-blue-400" id="smsSent">0</p>
+                    </div>
+                    <div class="admin-stat-mini">
+                        <p class="text-xs text-gray-400">Referrals</p>
+                        <p class="text-lg font-bold text-pink-400" id="referrals">0</p>
+                    </div>
+                    <div class="admin-stat-mini">
+                        <p class="text-xs text-gray-400">Vouchers</p>
+                        <p class="text-lg font-bold text-purple-400" id="vouchersActive">0</p>
+                    </div>
+                    <div class="admin-stat-mini">
+                        <p class="text-xs text-gray-400">Staff</p>
+                        <p class="text-lg font-bold text-cyan-400" id="totalStaff">0</p>
+                    </div>
+                    <div class="admin-stat-mini">
+                        <p class="text-xs text-gray-400">Hotspot Sessions</p>
+                        <p class="text-lg font-bold text-emerald-400" id="hotspotSessions">0</p>
+                    </div>
+                    <div class="admin-stat-mini">
+                        <p class="text-xs text-gray-400">PPPoE Active</p>
+                        <p class="text-lg font-bold text-blue-400" id="pppoeActiveCount">0</p>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid lg:grid-cols-2 gap-8 mb-8">
+                    <div class="admin-chart-card">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-white">Revenue Overview</h3>
+                            <select id="revenuePeriod" class="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-white text-sm">
+                                <option value="7">Last 7 Days</option>
+                                <option value="30" selected>Last 30 Days</option>
+                                <option value="90">Last 90 Days</option>
+                            </select>
+                        </div>
+                        <canvas id="revenueChart" height="250"></canvas>
+                    </div>
+
+                    <div class="admin-chart-card">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-white">Package Distribution</h3>
+                        </div>
+                        <canvas id="packageChart" height="250"></canvas>
+                    </div>
+                </div>
+
+                <!-- MikroTik Hotspot Live Stats -->
+                <div class="grid lg:grid-cols-2 gap-8 mb-8">
+                    <div class="admin-chart-card">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-white">Hotspot Active Users</h3>
+                            <span class="text-xs text-green-400 animate-pulse">● Live</span>
+                        </div>
+                        <canvas id="hotspotChart" height="250"></canvas>
+                    </div>
+
+                    <div class="admin-chart-card">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-white">Bandwidth Usage</h3>
+                            <span class="text-xs text-cyan-400">Real-time</span>
+                        </div>
+                        <canvas id="bandwidthChart" height="250"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Activity & Quick Actions -->
+                <div class="grid lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 admin-activity-card">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-white">Recent Activity</h3>
+                            <a href="#" class="text-sm text-blue-400 hover:text-blue-300">View All</a>
+                        </div>
+                        <div id="adminRecentActivity" class="space-y-3"></div>
+                    </div>
+
+                    <div class="admin-quick-actions-card">
+                        <h3 class="text-lg font-bold text-white mb-4">Quick Actions</h3>
+                        <div class="space-y-3">
+                            <button onclick="showAddCustomerModal()" class="w-full py-3 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition flex items-center gap-3">
+                                <i class="fas fa-user-plus"></i>
+                                <span>Add Customer</span>
+                            </button>
+                            <button onclick="showAddPackageModal()" class="w-full py-3 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition flex items-center gap-3">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Create Package</span>
+                            </button>
+                            <button onclick="showRecordPaymentModal()" class="w-full py-3 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition flex items-center gap-3">
+                                <i class="fas fa-hand-holding-usd"></i>
+                                <span>Record Payment</span>
+                            </button>
+                            <button onclick="showAddRouterModal()" class="w-full py-3 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition flex items-center gap-3">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Add Router</span>
+                            </button>
+                            <button onclick="window.location.href='/orbitnetworks/admin/hotspot.html'" class="w-full py-3 bg-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition flex items-center gap-3">
+                                <i class="fas fa-wifi"></i>
+                                <span>Hotspot Manager</span>
+                            </button>
+                            <button onclick="window.location.href='/orbitnetworks/admin/pppoe.html'" class="w-full py-3 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition flex items-center gap-3">
+                                <i class="fas fa-network-wired"></i>
+                                <span>PPPoE Manager</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OTHER PAGES (empty containers) -->
+            <div id="page-customers" class="admin-page hidden">
+                <div class="page-header">
+                    <h1 class="text-3xl font-bold text-white">Customers</h1>
+                    <p class="text-gray-400">Manage your customers</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
+                    <p class="text-gray-400">Customer management coming soon...</p>
+                </div>
+            </div>
+            
+            <div id="page-packages" class="admin-page hidden">
+                <div class="page-header">
+                    <h1 class="text-3xl font-bold text-white">Packages</h1>
+                    <p class="text-gray-400">Manage service packages</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
+                    <p class="text-gray-400">Package management coming soon...</p>
+                </div>
+            </div>
+            
+            <div id="page-payments" class="admin-page hidden">
+                <div class="page-header">
+                    <h1 class="text-3xl font-bold text-white">Payments</h1>
+                    <p class="text-gray-400">Manage payments and transactions</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
+                    <p class="text-gray-400">Payment management coming soon...</p>
+                </div>
+            </div>
+            
+            <div id="page-routers" class="admin-page hidden">
+                <div class="page-header">
+                    <h1 class="text-3xl font-bold text-white">Routers</h1>
+                    <p class="text-gray-400">Manage MikroTik routers</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
+                    <p class="text-gray-400">Router management coming soon...</p>
+                </div>
+            </div>
+            
+            <div id="page-hotspot" class="admin-page hidden">
+                <div class="page-header">
+                    <h1 class="text-3xl font-bold text-white">Hotspot Manager</h1>
+                    <p class="text-gray-400">Manage hotspot users and sessions</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
+                    <p class="text-gray-400">Hotspot management coming soon...</p>
+                </div>
+            </div>
+            
+            <div id="page-pppoe" class="admin-page hidden">
+                <div class="page-header">
+                    <h1 class="text-3xl font-bold text-white">PPPoE Manager</h1>
+                    <p class="text-gray-400">Manage PPPoE users and connections</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
+                    <p class="text-gray-400">PPPoE management coming soon...</p>
+                </div>
+            </div>
+            
+            <div id="page-reports" class="admin-page hidden">
+                <div class="page-header">
+                    <h1 class="text-3xl font-bold text-white">Reports</h1>
+                    <p class="text-gray-400">View analytics and reports</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
+                    <p class="text-gray-400">Reports coming soon...</p>
+                </div>
+            </div>
+            
+            <div id="page-settings" class="admin-page hidden">
+                <div class="page-header">
+                    <h1 class="text-3xl font-bold text-white">Settings</h1>
+                    <p class="text-gray-400">Configure system settings</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
+                    <p class="text-gray-400">Settings coming soon...</p>
+                </div>
+            </div>
         </main>
     </div>
 
-    <!-- MODALS (unchanged) -->
+    <!-- ============================================================
+    MODALS (unchanged - keep your existing modals)
+    ============================================================ -->
+    <!-- Add Customer Modal -->
     <div id="addCustomerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
         <div class="bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-6">
