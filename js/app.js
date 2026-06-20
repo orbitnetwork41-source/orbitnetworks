@@ -1,13 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import { showToast } from './utils/helpers.js';
-
-// ============================================
-// SUPABASE CONFIG
-// ============================================
-const supabase = createClient(
-    'https://ozyuyawnmwhkmzckxpgu.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96eXV5YXdubXdoa216Y2t4cGd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NjY3OTcsImV4cCI6MjA5NzU0Mjc5N30.q8BGDXNfR17wq9_g5feqqDmjLeBd4cPl2lP6D34n50g'
-);
+import { supabase } from './config/supabase.js';
+import { showToast, getTimeAgo, formatCurrency } from './utils/helpers.js';
 
 // ============================================
 // STATE
@@ -53,7 +45,6 @@ async function login(email, password) {
             profile: profile || { full_name: email.split('@')[0], role: 'customer' }
         };
         
-        // Store session
         localStorage.setItem('user', JSON.stringify(currentUser));
         
         return { success: true, user: currentUser };
@@ -101,7 +92,7 @@ function showApp(show) {
     }
 }
 
-function navigateTo(page) {
+window.navigateTo = function(page) {
     // Hide all pages
     document.querySelectorAll('.page-content').forEach(p => {
         p.classList.add('hidden');
@@ -143,39 +134,63 @@ function navigateTo(page) {
             loadRouters();
             break;
     }
-}
+};
 
 // ============================================
-// DASHBOARD FUNCTIONS
+// DASHBOARD
 // ============================================
 async function loadDashboard() {
     const container = document.getElementById('dashboardPage');
+    const user = getCurrentUser();
+    const isAdmin = user?.profile?.role === 'admin' || user?.profile?.role === 'super_admin';
     
     try {
-        // Get stats
-        const { count: totalCustomers } = await supabase
-            .from('customers')
-            .select('*', { count: 'exact', head: true });
+        let totalCustomers = 0;
+        let monthlyRevenue = 0;
+        let routersOnline = 0;
+        let activeUsers = Math.floor(Math.random() * 30) + 5;
         
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
+        // Get customers count
+        try {
+            const { count, error } = await supabase
+                .from('customers')
+                .select('*', { count: 'exact', head: true });
+            if (!error) totalCustomers = count || 0;
+        } catch (e) {
+            console.warn('Could not get customer count:', e.message);
+        }
         
-        const { data: payments } = await supabase
-            .from('payments')
-            .select('amount')
-            .gte('created_at', startOfMonth.toISOString())
-            .eq('status', 'completed');
+        // Get monthly revenue
+        try {
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0, 0, 0, 0);
+            
+            const { data, error } = await supabase
+                .from('payments')
+                .select('amount')
+                .gte('created_at', startOfMonth.toISOString())
+                .eq('status', 'completed');
+            
+            if (!error) {
+                monthlyRevenue = data?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+            }
+        } catch (e) {
+            console.warn('Could not get revenue:', e.message);
+        }
         
-        const monthlyRevenue = payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+        // Get online routers
+        try {
+            const { data, error } = await supabase
+                .from('routers')
+                .select('status');
+            if (!error) {
+                routersOnline = data?.filter(r => r.status === 'online').length || 0;
+            }
+        } catch (e) {
+            console.warn('Could not get router status:', e.message);
+        }
         
-        const { data: routers } = await supabase
-            .from('routers')
-            .select('status');
-        
-        const onlineRouters = routers?.filter(r => r.status === 'online').length || 0;
-        
-        // Render dashboard
         container.innerHTML = `
             <div class="page-header">
                 <h1>Dashboard</h1>
@@ -189,7 +204,7 @@ async function loadDashboard() {
                     </div>
                     <div class="stat-info">
                         <h3>Total Customers</h3>
-                        <span>${totalCustomers || 0}</span>
+                        <span>${totalCustomers}</span>
                     </div>
                 </div>
                 
@@ -199,7 +214,7 @@ async function loadDashboard() {
                     </div>
                     <div class="stat-info">
                         <h3>Monthly Revenue</h3>
-                        <span>KES ${monthlyRevenue.toFixed(2)}</span>
+                        <span>${formatCurrency(monthlyRevenue)}</span>
                     </div>
                 </div>
                 
@@ -209,7 +224,7 @@ async function loadDashboard() {
                     </div>
                     <div class="stat-info">
                         <h3>Active Users</h3>
-                        <span>${Math.floor(Math.random() * 30) + 5}</span>
+                        <span>${activeUsers}</span>
                     </div>
                 </div>
                 
@@ -219,7 +234,7 @@ async function loadDashboard() {
                     </div>
                     <div class="stat-info">
                         <h3>Routers Online</h3>
-                        <span>${onlineRouters}</span>
+                        <span>${routersOnline}</span>
                     </div>
                 </div>
             </div>
@@ -227,32 +242,30 @@ async function loadDashboard() {
             <div class="dashboard-grid">
                 <div class="card">
                     <h2>Recent Activity</h2>
-                    <div id="recentActivity">Loading...</div>
+                    <div id="recentActivity">
+                        <p class="text-gray-400">Loading...</p>
+                    </div>
                 </div>
                 <div class="card">
                     <h2>Quick Actions</h2>
                     <div class="action-buttons">
-                        <button class="btn-primary" onclick="navigateTo('customers')">
-                            <i class="fas fa-user-plus"></i> Add Customer
+                        <button class="btn-primary" onclick="window.navigateTo('customers')">
+                            <i class="fas fa-user-plus"></i> Customers
                         </button>
-                        <button class="btn-primary" onclick="navigateTo('packages')">
-                            <i class="fas fa-plus-circle"></i> Create Package
+                        <button class="btn-primary" onclick="window.navigateTo('packages')">
+                            <i class="fas fa-plus-circle"></i> Packages
                         </button>
-                        <button class="btn-primary" onclick="navigateTo('payments')">
-                            <i class="fas fa-hand-holding-usd"></i> Record Payment
+                        <button class="btn-primary" onclick="window.navigateTo('payments')">
+                            <i class="fas fa-hand-holding-usd"></i> Payments
                         </button>
-                        <button class="btn-primary" onclick="navigateTo('routers')">
-                            <i class="fas fa-plus-circle"></i> Add Router
+                        <button class="btn-primary" onclick="window.navigateTo('routers')">
+                            <i class="fas fa-router"></i> Routers
                         </button>
                     </div>
                 </div>
             </div>
         `;
         
-        // Load recent activity
-        await loadRecentActivity();
-        
-        // Update time
         updateTime();
         
     } catch (error) {
@@ -261,55 +274,20 @@ async function loadDashboard() {
             <div class="page-header"><h1>Dashboard</h1></div>
             <div class="text-red-400 p-4 bg-red-500/10 rounded-lg">
                 <i class="fas fa-exclamation-circle mr-2"></i>
-                Error loading dashboard: ${error.message}
+                Error loading dashboard. Please check your database connection.
             </div>
         `;
     }
 }
 
-async function loadRecentActivity() {
-    const container = document.getElementById('recentActivity');
-    if (!container) return;
-    
-    try {
-        const { data: activities } = await supabase
-            .from('activity_logs')
-            .select('*, profiles(full_name)')
-            .order('created_at', { ascending: false })
-            .limit(5);
-        
-        if (!activities || activities.length === 0) {
-            container.innerHTML = '<p class="text-gray-400">No recent activity</p>';
-            return;
-        }
-        
-        container.innerHTML = activities.map(a => `
-            <div class="activity-item">
-                <div class="activity-icon">
-                    <i class="fas fa-circle"></i>
-                </div>
-                <div class="activity-details">
-                    <strong>${a.action.replace(/_/g, ' ').toUpperCase()}</strong>
-                    <span>${a.profiles?.full_name || 'System'}</span>
-                    <small>${getTimeAgo(a.created_at)}</small>
-                </div>
-            </div>
-        `).join('');
-        
-    } catch (error) {
-        console.error('Error loading activity:', error);
-        container.innerHTML = '<p class="text-red-400">Error loading activity</p>';
-    }
-}
-
 // ============================================
-// CUSTOMER FUNCTIONS
+// CUSTOMERS
 // ============================================
 async function loadCustomers() {
     const container = document.getElementById('customersPage');
     
     try {
-        const { data: customers, error } = await supabase
+        const { data, error } = await supabase
             .from('customers')
             .select('*, profiles(full_name, phone)')
             .order('created_at', { ascending: false });
@@ -319,13 +297,9 @@ async function loadCustomers() {
         container.innerHTML = `
             <div class="page-header">
                 <h1>Customers</h1>
-                <button class="btn-primary" onclick="showAddCustomerModal()">
+                <button class="btn-primary" onclick="window.navigateTo('customers')">
                     <i class="fas fa-user-plus"></i> Add Customer
                 </button>
-            </div>
-            
-            <div class="search-bar">
-                <input type="text" id="searchCustomer" placeholder="Search customers..." />
             </div>
             
             <div class="table-container">
@@ -340,22 +314,22 @@ async function loadCustomers() {
                         </tr>
                     </thead>
                     <tbody>
-                        ${customers?.map(c => `
+                        ${data && data.length > 0 ? data.map(c => `
                             <tr>
                                 <td><strong>${c.profiles?.full_name || 'Unknown'}</strong></td>
                                 <td>${c.profiles?.phone || 'N/A'}</td>
                                 <td><span class="badge ${c.status === 'active' ? 'badge-success' : 'badge-danger'}">${c.status}</span></td>
                                 <td>${new Date(c.created_at).toLocaleDateString()}</td>
                                 <td>
-                                    <button class="btn-secondary" onclick="editCustomer('${c.id}')">
+                                    <button class="btn-secondary" onclick="window.editCustomer('${c.id}')">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button class="btn-danger" onclick="deleteCustomer('${c.id}')">
+                                    <button class="btn-danger" onclick="window.deleteCustomer('${c.id}')">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </td>
                             </tr>
-                        `).join('') || '<tr><td colspan="5" class="text-center text-gray-400 py-8">No customers found</td></tr>'}
+                        `).join('') : '<tr><td colspan="5" class="text-center text-gray-400 py-8">No customers found</td></tr>'}
                     </tbody>
                 </table>
             </div>
@@ -374,13 +348,13 @@ async function loadCustomers() {
 }
 
 // ============================================
-// PACKAGE FUNCTIONS
+// PACKAGES
 // ============================================
 async function loadPackages() {
     const container = document.getElementById('packagesPage');
     
     try {
-        const { data: packages, error } = await supabase
+        const { data, error } = await supabase
             .from('packages')
             .select('*')
             .eq('is_active', true)
@@ -391,16 +365,16 @@ async function loadPackages() {
         container.innerHTML = `
             <div class="page-header">
                 <h1>Packages</h1>
-                <button class="btn-primary" onclick="showAddPackageModal()">
+                <button class="btn-primary" onclick="window.navigateTo('packages')">
                     <i class="fas fa-plus-circle"></i> Create Package
                 </button>
             </div>
             
             <div class="packages-grid">
-                ${packages?.map(p => `
+                ${data && data.length > 0 ? data.map(p => `
                     <div class="package-card">
                         <h3>${p.name}</h3>
-                        <div class="price">KES ${p.price}</div>
+                        <div class="price">${formatCurrency(p.price)}</div>
                         <div class="package-details">
                             <p>⚡ ${p.speed}</p>
                             <p>📦 ${p.data_limit_gb || 'Unlimited'} GB</p>
@@ -409,14 +383,16 @@ async function loadPackages() {
                         <ul class="features">
                             ${(p.features || ['24/7 Support']).map(f => `<li>✓ ${f}</li>`).join('')}
                         </ul>
-                        <button class="btn-secondary" onclick="editPackage('${p.id}')">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
-                        <button class="btn-danger" onclick="deletePackage('${p.id}')">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
+                        <div class="mt-3 flex gap-2">
+                            <button class="btn-secondary" onclick="window.editPackage('${p.id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-danger" onclick="window.deletePackage('${p.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
-                `).join('') || '<p class="text-center text-gray-400 py-8">No packages available</p>'}
+                `).join('') : '<p class="text-center text-gray-400 py-8">No packages available</p>'}
             </div>
         `;
         
@@ -433,13 +409,13 @@ async function loadPackages() {
 }
 
 // ============================================
-// PAYMENT FUNCTIONS
+// PAYMENTS
 // ============================================
 async function loadPayments() {
     const container = document.getElementById('paymentsPage');
     
     try {
-        const { data: payments, error } = await supabase
+        const { data, error } = await supabase
             .from('payments')
             .select('*, customers(id, profiles(full_name))')
             .order('created_at', { ascending: false })
@@ -450,7 +426,7 @@ async function loadPayments() {
         container.innerHTML = `
             <div class="page-header">
                 <h1>Payments</h1>
-                <button class="btn-primary" onclick="showAddPaymentModal()">
+                <button class="btn-primary" onclick="window.navigateTo('payments')">
                     <i class="fas fa-plus-circle"></i> Record Payment
                 </button>
             </div>
@@ -468,16 +444,16 @@ async function loadPayments() {
                         </tr>
                     </thead>
                     <tbody>
-                        ${payments?.map(p => `
+                        ${data && data.length > 0 ? data.map(p => `
                             <tr>
                                 <td>${new Date(p.created_at).toLocaleDateString()}</td>
                                 <td>${p.customers?.profiles?.full_name || 'Unknown'}</td>
-                                <td><strong>KES ${p.amount}</strong></td>
+                                <td><strong>${formatCurrency(p.amount)}</strong></td>
                                 <td>${p.method}</td>
                                 <td><span class="badge ${p.status === 'completed' ? 'badge-success' : p.status === 'pending' ? 'badge-warning' : 'badge-danger'}">${p.status}</span></td>
                                 <td>${p.reference || 'N/A'}</td>
                             </tr>
-                        `).join('') || '<tr><td colspan="6" class="text-center text-gray-400 py-8">No payments found</td></tr>'}
+                        `).join('') : '<tr><td colspan="6" class="text-center text-gray-400 py-8">No payments found</td></tr>'}
                     </tbody>
                 </table>
             </div>
@@ -496,13 +472,13 @@ async function loadPayments() {
 }
 
 // ============================================
-// ROUTER FUNCTIONS
+// ROUTERS
 // ============================================
 async function loadRouters() {
     const container = document.getElementById('routersPage');
     
     try {
-        const { data: routers, error } = await supabase
+        const { data, error } = await supabase
             .from('routers')
             .select('*')
             .order('name');
@@ -512,13 +488,13 @@ async function loadRouters() {
         container.innerHTML = `
             <div class="page-header">
                 <h1>Routers</h1>
-                <button class="btn-primary" onclick="showAddRouterModal()">
+                <button class="btn-primary" onclick="window.navigateTo('routers')">
                     <i class="fas fa-plus-circle"></i> Add Router
                 </button>
             </div>
             
             <div class="router-grid">
-                ${routers?.map(r => `
+                ${data && data.length > 0 ? data.map(r => `
                     <div class="router-card">
                         <h3>📡 ${r.name}</h3>
                         <p><strong>IP:</strong> ${r.ip_address}</p>
@@ -528,15 +504,15 @@ async function loadRouters() {
                             <span class="badge ${r.status === 'online' ? 'badge-success' : 'badge-danger'}">${r.status}</span>
                         </p>
                         <div class="mt-3 flex gap-2">
-                            <button class="btn-secondary" onclick="editRouter('${r.id}')">
+                            <button class="btn-secondary" onclick="window.editRouter('${r.id}')">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn-danger" onclick="deleteRouter('${r.id}')">
+                            <button class="btn-danger" onclick="window.deleteRouter('${r.id}')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </div>
-                `).join('') || '<p class="text-center text-gray-400 py-8">No routers configured</p>'}
+                `).join('') : '<p class="text-center text-gray-400 py-8">No routers configured</p>'}
             </div>
         `;
         
@@ -553,48 +529,10 @@ async function loadRouters() {
 }
 
 // ============================================
-// UTILITY FUNCTIONS
+// CRUD OPERATIONS (Global Functions)
 // ============================================
-function getTimeAgo(date) {
-    const now = new Date();
-    const diff = Math.floor((now - new Date(date)) / 1000);
-    
-    if (diff < 60) return 'Just now';
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-    return new Date(date).toLocaleDateString();
-}
-
-function updateTime() {
-    const el = document.getElementById('currentTime');
-    if (el) {
-        el.textContent = new Date().toLocaleString();
-    }
-    setTimeout(updateTime, 1000);
-}
-
-// ============================================
-// MODAL FUNCTIONS (Placeholders)
-// ============================================
-window.showAddCustomerModal = function() {
-    showToast('Add customer modal coming soon!', 'info');
-};
-
-window.showAddPackageModal = function() {
-    showToast('Add package modal coming soon!', 'info');
-};
-
-window.showAddPaymentModal = function() {
-    showToast('Record payment modal coming soon!', 'info');
-};
-
-window.showAddRouterModal = function() {
-    showToast('Add router modal coming soon!', 'info');
-};
-
 window.editCustomer = function(id) {
-    showToast(`Edit customer: ${id}`, 'info');
+    showToast('Edit customer: ' + id, 'info');
 };
 
 window.deleteCustomer = async function(id) {
@@ -613,7 +551,7 @@ window.deleteCustomer = async function(id) {
 };
 
 window.editPackage = function(id) {
-    showToast(`Edit package: ${id}`, 'info');
+    showToast('Edit package: ' + id, 'info');
 };
 
 window.deletePackage = async function(id) {
@@ -632,7 +570,7 @@ window.deletePackage = async function(id) {
 };
 
 window.editRouter = function(id) {
-    showToast(`Edit router: ${id}`, 'info');
+    showToast('Edit router: ' + id, 'info');
 };
 
 window.deleteRouter = async function(id) {
@@ -651,14 +589,24 @@ window.deleteRouter = async function(id) {
 };
 
 // ============================================
+// UTILITY FUNCTIONS
+// ============================================
+function updateTime() {
+    const el = document.getElementById('currentTime');
+    if (el) {
+        el.textContent = new Date().toLocaleString();
+    }
+    setTimeout(updateTime, 1000);
+}
+
+// ============================================
 // NAVIGATION
 // ============================================
 document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', (e) => {
         e.preventDefault();
         const page = link.dataset.page;
-        navigateTo(page);
-        // Update URL hash
+        window.navigateTo(page);
         history.pushState(null, '', `#${page}`);
     });
 });
@@ -679,7 +627,7 @@ loginForm.addEventListener('submit', async (e) => {
     if (result.success) {
         showToast('Welcome back!', 'success');
         showApp(true);
-        navigateTo('dashboard');
+        window.navigateTo('dashboard');
         document.getElementById('email').value = '';
         document.getElementById('password').value = '';
     } else {
@@ -699,22 +647,20 @@ logoutBtn.addEventListener('click', logout);
 // ============================================
 if (isAuthenticated()) {
     showApp(true);
-    // Check URL hash for page
     const hash = window.location.hash.replace('#', '');
     if (hash) {
-        navigateTo(hash);
+        window.navigateTo(hash);
     } else {
-        navigateTo('dashboard');
+        window.navigateTo('dashboard');
     }
 } else {
     showApp(false);
 }
 
-// Handle browser back/forward
 window.addEventListener('popstate', () => {
     const hash = window.location.hash.replace('#', '');
     if (hash) {
-        navigateTo(hash);
+        window.navigateTo(hash);
     }
 });
 
