@@ -100,7 +100,6 @@ function showApp(show) {
             if (userAvatar) userAvatar.textContent = initials;
             if (userRole) userRole.textContent = role.charAt(0).toUpperCase() + role.slice(1);
             
-            // Show/hide admin link
             updateAdminLink();
         }
     } else {
@@ -109,9 +108,6 @@ function showApp(show) {
     }
 }
 
-// ============================================
-// SHOW/HIDE ADMIN LINK
-// ============================================
 function updateAdminLink() {
     const adminLink = document.getElementById('adminPanelLink');
     if (adminLink) {
@@ -124,20 +120,17 @@ function updateAdminLink() {
 // NAVIGATION
 // ============================================
 window.navigateTo = function(page) {
-    // Hide all pages
     document.querySelectorAll('.page-content').forEach(p => {
         p.classList.add('hidden');
         p.classList.remove('active');
     });
     
-    // Show selected page
     const target = document.getElementById(`${page}Page`);
     if (target) {
         target.classList.remove('hidden');
         target.classList.add('active');
     }
     
-    // Update nav links
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
         if (link.dataset.page === page) {
@@ -147,7 +140,6 @@ window.navigateTo = function(page) {
     
     currentPage = page;
     
-    // Load page data
     switch(page) {
         case 'dashboard':
             loadDashboard();
@@ -171,7 +163,6 @@ window.navigateTo = function(page) {
             loadSettings();
             break;
         case 'admin':
-            // Redirect to admin dashboard
             window.location.href = '/orbitnetworks/admin/dashboard.html';
             break;
     }
@@ -182,7 +173,6 @@ window.navigateTo = function(page) {
 // ============================================
 async function loadDashboard() {
     const container = document.getElementById('dashboardPage');
-    const user = getCurrentUser();
     const admin = isAdmin();
     
     try {
@@ -193,7 +183,6 @@ async function loadDashboard() {
         let pendingPayments = 0;
         let successRate = 0;
         
-        // Get customers count
         try {
             const { count, error } = await supabase
                 .from('customers')
@@ -203,7 +192,6 @@ async function loadDashboard() {
             console.warn('Could not get customer count:', e.message);
         }
         
-        // Get monthly revenue
         try {
             const startOfMonth = new Date();
             startOfMonth.setDate(1);
@@ -229,7 +217,6 @@ async function loadDashboard() {
             console.warn('Could not get revenue:', e.message);
         }
         
-        // Get online routers
         try {
             const { data, error } = await supabase
                 .from('routers')
@@ -241,7 +228,6 @@ async function loadDashboard() {
             console.warn('Could not get router status:', e.message);
         }
         
-        // Get recent activity
         const recentActivity = await getRecentActivity();
         
         container.innerHTML = `
@@ -297,7 +283,6 @@ async function loadDashboard() {
                 </div>
             </div>
             
-            <!-- Module Stats Row -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div class="bg-white/5 border border-white/10 rounded-lg p-4 text-center">
                     <p class="text-xs text-gray-400">Success Rate</p>
@@ -351,7 +336,6 @@ async function loadDashboard() {
         
         updateTime();
         
-        // Start auto-refresh
         if (refreshInterval) {
             clearInterval(refreshInterval);
         }
@@ -550,7 +534,6 @@ async function loadPackages() {
             </div>
         `;
         
-        // Update package count
         const pkgCount = document.getElementById('totalPackages');
         if (pkgCount) pkgCount.textContent = data?.length || 0;
         
@@ -919,7 +902,6 @@ loginForm.addEventListener('submit', async (e) => {
     const result = await login(email, password);
     
     if (result.success) {
-        // Check if user is admin
         if (AuthService.isAdmin()) {
             window.location.href = '/orbitnetworks/admin/dashboard.html';
             return;
@@ -946,7 +928,6 @@ logoutBtn.addEventListener('click', logout);
 // INIT
 // ============================================
 if (isAuthenticated()) {
-    // Check if admin - redirect to admin dashboard
     if (AuthService.isAdmin()) {
         window.location.href = '/orbitnetworks/admin/dashboard.html';
         return;
