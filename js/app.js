@@ -922,8 +922,11 @@ loginForm.addEventListener('submit', async (e) => {
 // ============================================
 // LOGOUT
 // ============================================
-logoutBtn.addEventListener('click', logout);
-
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', logout);
+} else {
+    console.warn('⚠️ Logout button not found in DOM');
+}
 // ============================================
 // INIT - WRAPPED IN IIFE TO ALLOW RETURN
 // ============================================
