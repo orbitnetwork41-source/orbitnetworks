@@ -2237,18 +2237,28 @@ async function loadCustomersForDropdown() {
 // ============================================
 // ADD CUSTOMER FORM - COMPLETE WORKING VERSION
 // ============================================
+// ============================================
+// ADD CUSTOMER WITH AUTH - COMPLETE
+// ============================================
 document.getElementById('addCustomerForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const fullName = document.getElementById('customerFullName')?.value?.trim();
     const phone = document.getElementById('customerPhone')?.value?.trim();
     const email = document.getElementById('customerEmail')?.value?.trim();
+    const password = document.getElementById('customerPassword')?.value;
     const packageId = document.getElementById('customerPackage')?.value;
     const status = document.getElementById('customerStatus')?.value;
     
     // Validate required fields
-    if (!fullName || !phone) {
+    if (!fullName || !phone || !email || !password) {
         showToast('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    // Validate password length
+    if (password.length < 6) {
+        showToast('Password must be at least 6 characters', 'error');
         return;
     }
     
@@ -2267,32 +2277,80 @@ document.getElementById('addCustomerForm')?.addEventListener('submit', async (e)
     }
     
     try {
-        console.log('📝 Creating customer:', { fullName, phone, email, packageId, status });
+        // Step 1: Create auth user first
+        console.log('🔐 Creating auth user:', email);
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+                data: {
+                    full_name: fullName,
+                    phone: phone,
+                    role: 'customer'
+                }
+            }
+        });
         
-        // Call the PostgreSQL function using Supabase RPC
-        const { data, error } = await supabase
-            .rpc('create_customer', {
-                p_full_name: fullName,
-                p_phone: phone,
-                p_email: email || null,
-                p_package_id: packageId || null,
-                p_status: status || 'active'
-            });
-        
-        if (error) {
-            console.error('❌ RPC Error:', error);
-            
-            // Check if it's a duplicate phone error
-            if (error.message && error.message.includes('duplicate key')) {
-                showToast('A customer with this phone number already exists', 'error');
+        if (authError) {
+            console.error('❌ Auth Error:', authError);
+            if (authError.message.includes('already registered')) {
+                showToast('This email is already registered. Please use a different email.', 'error');
             } else {
-                showToast('Failed to create customer: ' + error.message, 'error');
+                showToast('Failed to create account: ' + authError.message, 'error');
             }
             return;
         }
         
-        console.log('✅ Customer created successfully:', data);
-        showToast(`Customer ${fullName} created successfully!`, 'success');
+        console.log('✅ Auth user created:', authData.user.id);
+        
+        // Step 2: Create profile and customer using the auth user ID
+        const customerId = authData.user.id;
+        
+        // Insert profile
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+                id: customerId,
+                full_name: fullName,
+                phone: phone,
+                email: email,
+                role: 'customer',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            });
+        
+        if (profileError) {
+            console.error('❌ Profile error:', profileError);
+            // Delete auth user if profile creation fails
+            await supabase.auth.admin.deleteUser(customerId);
+            throw new Error('Failed to create profile: ' + profileError.message);
+        }
+        
+        // Insert customer
+        const { data: customer, error: customerError } = await supabase
+            .from('customers')
+            .insert({
+                id: customerId,
+                package_id: packageId || null,
+                status: status || 'active',
+                wallet_balance: 0,
+                data_used_gb: 0,
+                data_limit_gb: 0,
+                created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+        
+        if (customerError) {
+            console.error('❌ Customer error:', customerError);
+            // Clean up
+            await supabase.from('profiles').delete().eq('id', customerId);
+            await supabase.auth.admin.deleteUser(customerId);
+            throw new Error('Failed to create customer: ' + customerError.message);
+        }
+        
+        console.log('✅ Customer created with auth:', customer);
+        showToast(`Customer ${fullName} created successfully! They can now login.`, 'success');
         
         // Close modal
         window.closeAddCustomerModal();
@@ -2305,7 +2363,7 @@ document.getElementById('addCustomerForm')?.addEventListener('submit', async (e)
         document.getElementById('addCustomerForm').reset();
         
     } catch (error) {
-        console.error('❌ Error creating customer:', error);
+        console.error('❌ Error:', error);
         showToast('Failed to create customer: ' + (error.message || 'Unknown error'), 'error');
     } finally {
         if (submitBtn) {
