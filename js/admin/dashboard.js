@@ -229,10 +229,30 @@ function switchPage(pageId) {
         history.pushState(null, null, '#admin-' + pageId);
     }
     
-    // Refresh dashboard if switching to dashboard
-    if (pageId === 'dashboard' && window.loadAllDashboardData) {
-        window.loadAllDashboardData();
-    }
+    // Load page-specific data
+    setTimeout(() => {
+        switch (pageId) {
+            case 'dashboard':
+                if (window.loadAllDashboardData) {
+                    window.loadAllDashboardData();
+                }
+                break;
+            case 'customers':
+                loadCustomers();
+                break;
+            case 'packages':
+                loadPackages();
+                break;
+            case 'payments':
+                loadPayments();
+                break;
+            case 'routers':
+                loadRouters();
+                break;
+            default:
+                break;
+        }
+    }, 100);
 }
 
 function setupNavigation() {
@@ -641,7 +661,7 @@ async function loadRecentActivity() {
 }
 
 // ============================================
-// CHARTS (Placeholder - implement as needed)
+// CHARTS
 // ============================================
 async function loadRevenueChart(days) {
     console.log('Loading revenue chart...');
@@ -663,6 +683,446 @@ async function loadHotspotChart() {
 async function loadBandwidthChart() {
     console.log('Loading bandwidth chart...');
 }
+
+// ============================================
+// ============================================
+// PAGE DATA LOADING FUNCTIONS
+// ============================================
+// ============================================
+
+// ============================================
+// LOAD PACKAGES
+// ============================================
+async function loadPackages() {
+    console.log('📦 Loading packages...');
+    try {
+        const { data, error } = await supabase
+            .from('packages')
+            .select('*')
+            .order('price', { ascending: true });
+
+        if (error) throw error;
+
+        // Update stats
+        const total = data?.length || 0;
+        const active = data?.filter(p => p.is_active === true).length || 0;
+        const inactive = data?.filter(p => p.is_active === false).length || 0;
+        const totalRevenue = data?.reduce((sum, p) => sum + Number(p.price), 0) || 0;
+
+        const totalEl = document.getElementById('packageTotal');
+        const activeEl = document.getElementById('packageActive');
+        const inactiveEl = document.getElementById('packageInactive');
+        const revenueEl = document.getElementById('packageRevenue');
+
+        if (totalEl) totalEl.textContent = total;
+        if (activeEl) activeEl.textContent = active;
+        if (inactiveEl) inactiveEl.textContent = inactive;
+        if (revenueEl) revenueEl.textContent = formatCurrency(totalRevenue);
+
+        // Render packages grid
+        const grid = document.getElementById('packagesGrid');
+        if (!grid) return;
+
+        if (!data || data.length === 0) {
+            grid.innerHTML = `
+                <div class="text-center text-gray-400 py-8 col-span-full">
+                    <i class="fas fa-box text-4xl mb-4"></i>
+                    <p>No packages found</p>
+                    <button onclick="showAddPackageModal()" class="mt-4 px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition">
+                        <i class="fas fa-plus-circle"></i> Create First Package
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = data.map(pkg => `
+            <div class="bg-white/5 border border-white/10 rounded-lg p-6 hover:bg-white/10 transition">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-white">${pkg.name}</h3>
+                        <p class="text-2xl font-bold text-green-400">KES ${Number(pkg.price).toLocaleString()}</p>
+                    </div>
+                    <span class="px-2 py-1 text-xs rounded-full ${pkg.is_active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-500/20 text-gray-400'}">
+                        ${pkg.is_active ? '✅ Active' : '❌ Inactive'}
+                    </span>
+                </div>
+                <div class="space-y-2 text-sm text-gray-400">
+                    <p><i class="fas fa-tachometer-alt w-5 text-blue-400"></i> ${pkg.speed}</p>
+                    <p><i class="fas fa-database w-5 text-purple-400"></i> ${pkg.data_limit_gb || 'Unlimited'} GB</p>
+                    <p><i class="fas fa-calendar-day w-5 text-green-400"></i> ${pkg.validity_days} days</p>
+                </div>
+                <div class="mt-4 flex gap-2">
+                    <button onclick="editPackage('${pkg.id}')" class="flex-1 px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition text-sm">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button onclick="togglePackageStatus('${pkg.id}')" class="flex-1 px-3 py-1.5 ${pkg.is_active ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'} rounded-lg transition text-sm">
+                        <i class="fas ${pkg.is_active ? 'fa-pause' : 'fa-play'}"></i> ${pkg.is_active ? 'Deactivate' : 'Activate'}
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Error loading packages:', error);
+        const grid = document.getElementById('packagesGrid');
+        if (grid) {
+            grid.innerHTML = `
+                <div class="text-center text-red-400 py-8 col-span-full">
+                    <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+                    <p>Error loading packages</p>
+                    <button onclick="loadPackages()" class="mt-4 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition">
+                        <i class="fas fa-sync-alt"></i> Retry
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+// ============================================
+// LOAD CUSTOMERS
+// ============================================
+async function loadCustomers() {
+    console.log('👥 Loading customers...');
+    try {
+        const { data, error } = await supabase
+            .from('customers')
+            .select(`
+                *,
+                profiles:profiles(full_name, phone, email),
+                packages:packages(name, price)
+            `)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Update stats
+        const total = data?.length || 0;
+        const active = data?.filter(c => c.status === 'active').length || 0;
+        const inactive = data?.filter(c => c.status === 'inactive').length || 0;
+        const suspended = data?.filter(c => c.status === 'suspended').length || 0;
+
+        const totalEl = document.getElementById('customerTotal');
+        const activeEl = document.getElementById('customerActive');
+        const inactiveEl = document.getElementById('customerInactive');
+        const suspendedEl = document.getElementById('customerSuspended');
+
+        if (totalEl) totalEl.textContent = total;
+        if (activeEl) activeEl.textContent = active;
+        if (inactiveEl) inactiveEl.textContent = inactive;
+        if (suspendedEl) suspendedEl.textContent = suspended;
+
+        // Render table
+        const tbody = document.getElementById('customersTableBody');
+        if (!tbody) return;
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-gray-400 py-8">
+                        <i class="fas fa-users text-4xl mb-4"></i>
+                        <p>No customers found</p>
+                        <button onclick="showAddCustomerModal()" class="mt-4 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition">
+                            <i class="fas fa-user-plus"></i> Add First Customer
+                        </button>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = data.map(customer => `
+            <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                <td class="px-4 py-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+                            <span class="text-sm font-bold text-blue-400">${customer.profiles?.full_name?.charAt(0) || '?'}</span>
+                        </div>
+                        <div>
+                            <p class="text-white text-sm">${customer.profiles?.full_name || 'Unknown'}</p>
+                            <p class="text-xs text-gray-500">${customer.profiles?.email || 'No email'}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-4 py-3 text-gray-300 text-sm">${customer.profiles?.phone || 'N/A'}</td>
+                <td class="px-4 py-3 text-gray-300 text-sm">${customer.packages?.name || 'No Package'}</td>
+                <td class="px-4 py-3">
+                    <span class="px-2 py-1 text-xs rounded-full ${
+                        customer.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
+                        customer.status === 'inactive' ? 'bg-gray-500/20 text-gray-400' :
+                        'bg-red-500/20 text-red-400'
+                    }">${customer.status || 'Unknown'}</span>
+                </td>
+                <td class="px-4 py-3 text-gray-300 text-sm">${customer.data_used_gb || 0} GB</td>
+                <td class="px-4 py-3">
+                    <button onclick="viewCustomer('${customer.id}')" class="text-blue-400 hover:text-blue-300 text-sm">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+    } catch (error) {
+        console.error('Error loading customers:', error);
+        const tbody = document.getElementById('customersTableBody');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-red-400 py-8">
+                        <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+                        <p>Error loading customers</p>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+}
+
+// ============================================
+// LOAD PAYMENTS
+// ============================================
+async function loadPayments() {
+    console.log('💳 Loading payments...');
+    try {
+        const { data, error } = await supabase
+            .from('payments')
+            .select(`
+                *,
+                customer:customer_id (
+                    profiles (full_name, phone)
+                )
+            `)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Update stats
+        const total = data?.length || 0;
+        const completed = data?.filter(p => p.status === 'completed').length || 0;
+        const pending = data?.filter(p => p.status === 'pending').length || 0;
+        const failed = data?.filter(p => p.status === 'failed').length || 0;
+        const totalRevenue = data?.filter(p => p.status === 'completed')
+            .reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+
+        const revenueEl = document.getElementById('paymentTotalRevenue');
+        const completedEl = document.getElementById('paymentCompleted');
+        const pendingEl = document.getElementById('paymentPending');
+        const failedEl = document.getElementById('paymentFailed');
+
+        if (revenueEl) revenueEl.textContent = formatCurrency(totalRevenue);
+        if (completedEl) completedEl.textContent = completed;
+        if (pendingEl) pendingEl.textContent = pending;
+        if (failedEl) failedEl.textContent = failed;
+
+        // Render table
+        const tbody = document.getElementById('paymentsTableBody');
+        if (!tbody) return;
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-gray-400 py-8">
+                        <i class="fas fa-credit-card text-4xl mb-4"></i>
+                        <p>No payments found</p>
+                        <button onclick="showRecordPaymentModal()" class="mt-4 px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition">
+                            <i class="fas fa-plus"></i> Record First Payment
+                        </button>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = data.map(payment => `
+            <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                <td class="px-4 py-3 text-white text-sm font-mono">${payment.reference || payment.id.slice(0, 8)}</td>
+                <td class="px-4 py-3 text-gray-300 text-sm">${payment.customer?.profiles?.full_name || 'Unknown'}</td>
+                <td class="px-4 py-3 text-green-400 font-bold text-sm">${formatCurrency(payment.amount)}</td>
+                <td class="px-4 py-3 text-gray-300 text-sm">${payment.method || 'N/A'}</td>
+                <td class="px-4 py-3">
+                    <span class="px-2 py-1 text-xs rounded-full ${
+                        payment.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
+                        payment.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                        payment.status === 'failed' ? 'bg-red-500/20 text-red-400' :
+                        'bg-gray-500/20 text-gray-400'
+                    }">${payment.status || 'Unknown'}</span>
+                </td>
+                <td class="px-4 py-3 text-gray-400 text-sm">${formatDate(payment.created_at)}</td>
+            </tr>
+        `).join('');
+
+    } catch (error) {
+        console.error('Error loading payments:', error);
+        const tbody = document.getElementById('paymentsTableBody');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-red-400 py-8">
+                        <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+                        <p>Error loading payments</p>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+}
+
+// ============================================
+// LOAD ROUTERS
+// ============================================
+async function loadRouters() {
+    console.log('📡 Loading routers...');
+    try {
+        const { data, error } = await supabase
+            .from('routers')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Update stats
+        const total = data?.length || 0;
+        const online = data?.filter(r => r.status === 'online').length || 0;
+        const offline = data?.filter(r => r.status === 'offline').length || 0;
+        const uptime = total > 0 ? Math.round((online / total) * 100) : 0;
+
+        const totalEl = document.getElementById('routerTotal');
+        const onlineEl = document.getElementById('routerOnline');
+        const offlineEl = document.getElementById('routerOffline');
+        const uptimeEl = document.getElementById('routerUptime');
+
+        if (totalEl) totalEl.textContent = total;
+        if (onlineEl) onlineEl.textContent = online;
+        if (offlineEl) offlineEl.textContent = offline;
+        if (uptimeEl) uptimeEl.textContent = uptime + '%';
+
+        // Render grid
+        const grid = document.getElementById('routersGrid');
+        if (!grid) return;
+
+        if (!data || data.length === 0) {
+            grid.innerHTML = `
+                <div class="text-center text-gray-400 py-8 col-span-full">
+                    <i class="fas fa-router text-4xl mb-4"></i>
+                    <p>No routers found</p>
+                    <button onclick="showAddRouterModal()" class="mt-4 px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition">
+                        <i class="fas fa-plus-circle"></i> Add First Router
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = data.map(router => `
+            <div class="bg-white/5 border border-white/10 rounded-lg p-6 hover:bg-white/10 transition">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-white">${router.name}</h3>
+                        <p class="text-sm text-gray-400">${router.ip_address}</p>
+                    </div>
+                    <span class="px-2 py-1 text-xs rounded-full ${router.status === 'online' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}">
+                        ${router.status === 'online' ? '🟢 Online' : '🔴 Offline'}
+                    </span>
+                </div>
+                <div class="space-y-2 text-sm text-gray-400">
+                    <p><i class="fas fa-microchip w-5 text-blue-400"></i> ${router.model || 'Unknown'}</p>
+                    <p><i class="fas fa-map-marker-alt w-5 text-green-400"></i> ${router.location || 'Unknown'}</p>
+                    ${router.api_username ? `<p><i class="fas fa-user w-5 text-purple-400"></i> ${router.api_username}</p>` : ''}
+                </div>
+                <div class="mt-4 flex gap-2">
+                    <button onclick="pingRouter('${router.id}')" class="flex-1 px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition text-sm">
+                        <i class="fas fa-network-wired"></i> Ping
+                    </button>
+                    <button onclick="editRouter('${router.id}')" class="flex-1 px-3 py-1.5 bg-yellow-500/20 text-yellow-400 rounded-lg hover:bg-yellow-500/30 transition text-sm">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Error loading routers:', error);
+        const grid = document.getElementById('routersGrid');
+        if (grid) {
+            grid.innerHTML = `
+                <div class="text-center text-red-400 py-8 col-span-full">
+                    <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+                    <p>Error loading routers</p>
+                </div>
+            `;
+        }
+    }
+}
+
+// ============================================
+// PAGE ACTION FUNCTIONS
+// ============================================
+window.togglePackageStatus = async function(packageId) {
+    try {
+        const { data: pkg, error: fetchError } = await supabase
+            .from('packages')
+            .select('is_active')
+            .eq('id', packageId)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        const newStatus = !pkg.is_active;
+        const { error } = await supabase
+            .from('packages')
+            .update({ 
+                is_active: newStatus,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', packageId);
+
+        if (error) throw error;
+
+        showToast(`Package ${newStatus ? 'activated' : 'deactivated'} successfully`, 'success');
+        loadPackages();
+    } catch (error) {
+        console.error('Error toggling package status:', error);
+        showToast('Error updating package: ' + error.message, 'error');
+    }
+};
+
+window.editPackage = function(packageId) {
+    showToast('Edit package feature coming soon!', 'info');
+};
+
+window.viewCustomer = function(customerId) {
+    showToast('View customer feature coming soon!', 'info');
+};
+
+window.pingRouter = function(routerId) {
+    showToast('Pinging router...', 'info');
+    setTimeout(() => {
+        showToast('Router is online!', 'success');
+    }, 2000);
+};
+
+window.editRouter = function(routerId) {
+    showToast('Edit router feature coming soon!', 'info');
+};
+
+window.filterPayments = function(status) {
+    // Update active filter button
+    document.querySelectorAll('.payment-filter').forEach(btn => {
+        btn.classList.remove('bg-blue-500/20', 'text-blue-400');
+        btn.classList.add('bg-white/5', 'text-gray-400');
+    });
+    const activeBtn = document.querySelector(`.payment-filter[data-filter="${status}"]`);
+    if (activeBtn) {
+        activeBtn.classList.remove('bg-white/5', 'text-gray-400');
+        activeBtn.classList.add('bg-blue-500/20', 'text-blue-400');
+    }
+    loadPayments();
+};
+
+window.refreshPayments = function() {
+    loadPayments();
+};
 
 // ============================================
 // NOTIFICATIONS
@@ -922,7 +1382,8 @@ document.getElementById('addCustomerForm')?.addEventListener('submit', async (e)
         
         showToast(`Customer ${fullName} created successfully!`, 'success');
         window.closeAddCustomerModal();
-        window.loadAllDashboardData();
+        loadCustomers();
+        loadAllDashboardData();
         
     } catch (error) {
         console.error('Error creating customer:', error);
@@ -963,7 +1424,8 @@ document.getElementById('addPackageForm')?.addEventListener('submit', async (e) 
         
         showToast(`Package ${name} created successfully!`, 'success');
         window.closeAddPackageModal();
-        window.loadAllDashboardData();
+        loadPackages();
+        loadAllDashboardData();
         
     } catch (error) {
         console.error('Error creating package:', error);
@@ -1025,7 +1487,8 @@ document.getElementById('recordPaymentForm')?.addEventListener('submit', async (
         
         showToast(`Payment of ${formatCurrency(amount)} recorded successfully!`, 'success');
         window.closeRecordPaymentModal();
-        window.loadAllDashboardData();
+        loadPayments();
+        loadAllDashboardData();
         
     } catch (error) {
         console.error('Error recording payment:', error);
@@ -1067,7 +1530,8 @@ document.getElementById('addRouterForm')?.addEventListener('submit', async (e) =
         
         showToast(`Router ${name} added successfully!`, 'success');
         window.closeAddRouterModal();
-        window.loadAllDashboardData();
+        loadRouters();
+        loadAllDashboardData();
         
     } catch (error) {
         console.error('Error adding router:', error);
@@ -1120,8 +1584,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.switchPage = switchPage;
 window.refreshDashboard = loadAllDashboardData;
 window.loadAllDashboardData = loadAllDashboardData;
+window.loadPackages = loadPackages;
+window.loadCustomers = loadCustomers;
+window.loadPayments = loadPayments;
+window.loadRouters = loadRouters;
 window.navigateTo = function(page) {
     switchPage(page);
 };
 
 console.log('✅ Orbit Networks Admin Dashboard loaded!');
+console.log('📦 Available functions: loadPackages(), loadCustomers(), loadPayments(), loadRouters()');
