@@ -925,25 +925,36 @@ loginForm.addEventListener('submit', async (e) => {
 logoutBtn.addEventListener('click', logout);
 
 // ============================================
-// INIT
+// INIT - WRAPPED IN FUNCTION TO AVOID ILLEGAL RETURN
 // ============================================
-if (isAuthenticated()) {
-    if (AuthService.isAdmin()) {
-        window.location.href = '/orbitnetworks/admin/dashboard.html';
-        return;
-    }
-    
-    showApp(true);
-    const hash = window.location.hash.replace('#', '');
-    if (hash) {
-        window.navigateTo(hash);
+function initializeApp() {
+    if (isAuthenticated()) {
+        // Check if user is admin - redirect to admin dashboard
+        if (AuthService.isAdmin()) {
+            window.location.href = '/orbitnetworks/admin/dashboard.html';
+            return;
+        }
+        
+        // Show the app
+        showApp(true);
+        
+        // Navigate to the page from URL hash or default to dashboard
+        const hash = window.location.hash.replace('#', '');
+        if (hash) {
+            window.navigateTo(hash);
+        } else {
+            window.navigateTo('dashboard');
+        }
     } else {
-        window.navigateTo('dashboard');
+        // Show login page
+        showApp(false);
     }
-} else {
-    showApp(false);
 }
 
+// Run initialization
+initializeApp();
+
+// Handle browser back/forward
 window.addEventListener('popstate', () => {
     const hash = window.location.hash.replace('#', '');
     if (hash) {
