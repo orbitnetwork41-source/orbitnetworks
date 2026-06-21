@@ -2238,7 +2238,7 @@ async function loadCustomersForDropdown() {
 // ADD CUSTOMER FORM - COMPLETE WORKING VERSION
 // ============================================
 // ============================================
-// ADD CUSTOMER WITH AUTH - COMPLETE
+// ADD CUSTOMER FORM - COMPLETE WORKING VERSION
 // ============================================
 document.getElementById('addCustomerForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -2277,7 +2277,49 @@ document.getElementById('addCustomerForm')?.addEventListener('submit', async (e)
     }
     
     try {
-        // Step 1: Create auth user first
+        // Step 1: Check if phone already exists
+        console.log('🔍 Checking phone:', phone);
+        const { data: existingPhone, error: phoneCheckError } = await supabase
+            .from('profiles')
+            .select('phone, full_name')
+            .eq('phone', phone)
+            .maybeSingle();
+        
+        if (phoneCheckError) {
+            console.warn('Phone check warning:', phoneCheckError);
+        }
+        
+        if (existingPhone) {
+            showToast(`Phone number ${phone} is already registered to ${existingPhone.full_name || 'another customer'}`, 'error');
+            if (submitBtn) {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+            return;
+        }
+        
+        // Step 2: Check if email already exists
+        console.log('🔍 Checking email:', email);
+        const { data: existingEmail, error: emailCheckError } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('email', email)
+            .maybeSingle();
+        
+        if (emailCheckError) {
+            console.warn('Email check warning:', emailCheckError);
+        }
+        
+        if (existingEmail) {
+            showToast(`Email ${email} is already registered to another customer`, 'error');
+            if (submitBtn) {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+            return;
+        }
+        
+        // Step 3: Create auth user (THIS GENERATES THE USER ID)
         console.log('🔐 Creating auth user:', email);
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email: email,
@@ -2293,20 +2335,23 @@ document.getElementById('addCustomerForm')?.addEventListener('submit', async (e)
         
         if (authError) {
             console.error('❌ Auth Error:', authError);
-            if (authError.message.includes('already registered')) {
+            if (authError.message && authError.message.includes('already registered')) {
                 showToast('This email is already registered. Please use a different email.', 'error');
             } else {
-                showToast('Failed to create account: ' + authError.message, 'error');
+                showToast('Failed to create account: ' + (authError.message || 'Unknown error'), 'error');
+            }
+            if (submitBtn) {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
             }
             return;
         }
         
-        console.log('✅ Auth user created:', authData.user.id);
-        
-        // Step 2: Create profile and customer using the auth user ID
+        // IMPORTANT: Use the ID from Auth, NOT a new UUID
         const customerId = authData.user.id;
+        console.log('✅ Auth user created with ID:', customerId);
         
-        // Insert profile
+        // Step 4: Create profile with the Auth user ID
         const { error: profileError } = await supabase
             .from('profiles')
             .insert({
@@ -2322,11 +2367,17 @@ document.getElementById('addCustomerForm')?.addEventListener('submit', async (e)
         if (profileError) {
             console.error('❌ Profile error:', profileError);
             // Delete auth user if profile creation fails
-            await supabase.auth.admin.deleteUser(customerId);
+            try {
+                await supabase.auth.admin.deleteUser(customerId);
+            } catch (deleteError) {
+                console.warn('Could not delete auth user:', deleteError);
+            }
             throw new Error('Failed to create profile: ' + profileError.message);
         }
         
-        // Insert customer
+        console.log('✅ Profile created for:', customerId);
+        
+        // Step 5: Create customer with the SAME ID
         const { data: customer, error: customerError } = await supabase
             .from('customers')
             .insert({
@@ -2345,11 +2396,15 @@ document.getElementById('addCustomerForm')?.addEventListener('submit', async (e)
             console.error('❌ Customer error:', customerError);
             // Clean up
             await supabase.from('profiles').delete().eq('id', customerId);
-            await supabase.auth.admin.deleteUser(customerId);
+            try {
+                await supabase.auth.admin.deleteUser(customerId);
+            } catch (deleteError) {
+                console.warn('Could not delete auth user:', deleteError);
+            }
             throw new Error('Failed to create customer: ' + customerError.message);
         }
         
-        console.log('✅ Customer created with auth:', customer);
+        console.log('✅ Customer created successfully:', customer);
         showToast(`Customer ${fullName} created successfully! They can now login.`, 'success');
         
         // Close modal
@@ -2363,7 +2418,7 @@ document.getElementById('addCustomerForm')?.addEventListener('submit', async (e)
         document.getElementById('addCustomerForm').reset();
         
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('❌ Error creating customer:', error);
         showToast('Failed to create customer: ' + (error.message || 'Unknown error'), 'error');
     } finally {
         if (submitBtn) {
