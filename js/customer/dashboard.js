@@ -1,9 +1,15 @@
 // js/customer/dashboard.js
-// Customer Dashboard - Enhanced Version
+// Customer Dashboard - Complete Working Version
 
 import { supabase } from '../config/supabase.js';
 import { AuthService } from '../services/auth.service.js';
-import { showToast, formatCurrency, formatDate, getTimeAgo, getInitials } from '../utils/helpers.js';
+import { 
+    showToast, 
+    formatCurrency, 
+    formatDate, 
+    getTimeAgo, 
+    getInitials 
+} from '../utils/helpers.js';
 
 // ============================================
 // STATE
@@ -22,6 +28,7 @@ const elements = {
     userMenuBtn: document.getElementById('userMenuBtn'),
     userMenu: document.getElementById('userMenu'),
     logoutBtn: document.getElementById('logoutBtn'),
+    logoutBtnMobile: document.getElementById('logoutBtnMobile'),
     dataUsed: document.getElementById('dataUsed'),
     dataLimit: document.getElementById('dataLimit'),
     currentPackage: document.getElementById('currentPackage'),
@@ -31,7 +38,8 @@ const elements = {
     connectionStatus: document.getElementById('connectionStatus'),
     currentSpeed: document.getElementById('currentSpeed'),
     recentActivity: document.getElementById('recentActivity'),
-    progressBar: document.querySelector('.bg-gradient-to-r.from-blue-500')
+    progressBar: document.getElementById('progressBar'),
+    walletBadge: document.getElementById('walletBadge')
 };
 
 // ============================================
@@ -43,7 +51,7 @@ if (!AuthService.isAuthenticated()) {
     throw new Error('Not authenticated');
 }
 
-// Check if user is customer (not admin)
+// Check if user is admin
 if (AuthService.isAdmin()) {
     console.log('👑 Admin user, redirecting to admin dashboard...');
     window.location.href = '/orbitnetworks/admin/dashboard.html';
@@ -52,37 +60,6 @@ if (AuthService.isAdmin()) {
 
 currentUser = AuthService.getCurrentUser();
 console.log('✅ Authenticated as customer:', currentUser?.email);
-
-// ============================================
-// INITIALIZATION
-// ============================================
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🚀 Initializing Customer Dashboard...');
-    
-    // Set user info
-    setUserInfo();
-    
-    // Load customer data
-    await loadCustomerData();
-    
-    // Load recent activity
-    await loadRecentActivity();
-    
-    // Setup user menu toggle
-    setupUserMenu();
-    
-    // Setup logout
-    setupLogout();
-    
-    // Setup real-time subscriptions
-    subscribeToCustomerData();
-    
-    // Start auto-refresh
-    startAutoRefresh();
-    
-    console.log('✅ Customer Dashboard ready!');
-    console.log(`👤 Logged in as: ${currentUser?.email}`);
-});
 
 // ============================================
 // SET USER INFO
@@ -95,7 +72,7 @@ function setUserInfo() {
     
     if (elements.welcomeName) elements.welcomeName.textContent = firstName;
     if (elements.userName) elements.userName.textContent = name;
-    if (elements.userInitial) elements.userInitial.textContent = firstName.charAt(0).toUpperCase();
+    if (elements.userInitial) elements.userInitial.textContent = initials;
 }
 
 // ============================================
@@ -137,6 +114,9 @@ async function loadCustomerData() {
 
         // Get last top-up
         await getLastTopup(userId);
+
+        // Update wallet badge
+        updateWalletBadge(customer);
 
     } catch (error) {
         console.error('❌ Error:', error);
@@ -189,6 +169,15 @@ function updateUI(customer) {
     
     // Speed
     if (elements.currentSpeed) elements.currentSpeed.textContent = pkg.speed || 'N/A';
+}
+
+// ============================================
+// UPDATE WALLET BADGE
+// ============================================
+function updateWalletBadge(customer) {
+    if (elements.walletBadge) {
+        elements.walletBadge.textContent = formatCurrency(customer.wallet_balance || 0);
+    }
 }
 
 // ============================================
@@ -379,7 +368,6 @@ function setupUserMenu() {
         menu.classList.toggle('hidden');
     });
     
-    // Close menu on outside click
     document.addEventListener('click', (e) => {
         if (!menu.contains(e.target) && !menuBtn.contains(e.target)) {
             menu.classList.add('hidden');
@@ -391,10 +379,16 @@ function setupUserMenu() {
 // LOGOUT SETUP
 // ============================================
 function setupLogout() {
+    const logoutHandler = () => {
+        AuthService.logout();
+    };
+    
     if (elements.logoutBtn) {
-        elements.logoutBtn.addEventListener('click', () => {
-            AuthService.logout();
-        });
+        elements.logoutBtn.addEventListener('click', logoutHandler);
+    }
+    
+    if (elements.logoutBtnMobile) {
+        elements.logoutBtnMobile.addEventListener('click', logoutHandler);
     }
 }
 
@@ -409,7 +403,7 @@ function startAutoRefresh() {
     refreshInterval = setInterval(() => {
         loadCustomerData();
         loadRecentActivity();
-    }, 30000); // Refresh every 30 seconds
+    }, 30000);
 }
 
 // ============================================
@@ -490,5 +484,90 @@ function subscribeToCustomerData() {
         }
     });
 }
+
+// ============================================
+// PAGE NAVIGATION
+// ============================================
+window.navigateTo = function(page) {
+    // Hide all pages
+    document.querySelectorAll('.page-content').forEach(p => {
+        p.classList.add('hidden');
+        p.classList.remove('active');
+    });
+
+    // Show selected page
+    const target = document.getElementById(`page-${page}`);
+    if (target) {
+        target.classList.remove('hidden');
+        target.classList.add('active');
+    }
+
+    // Update sidebar links
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.classList.remove('active');
+        if (link.dataset.page === page) {
+            link.classList.add('active');
+        }
+    });
+
+    // Close sidebar on mobile
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+};
+
+// ============================================
+// SIDEBAR TOGGLE (Global)
+// ============================================
+window.toggleSidebar = function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (sidebar) sidebar.classList.toggle('open');
+    if (overlay) overlay.classList.toggle('active');
+};
+
+window.closeSidebar = function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+};
+
+// ============================================
+// INITIALIZATION
+// ============================================
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 Initializing Customer Dashboard...');
+    
+    // Set user info
+    setUserInfo();
+    
+    // Setup user menu
+    setupUserMenu();
+    
+    // Setup logout
+    setupLogout();
+    
+    // Load customer data
+    await loadCustomerData();
+    
+    // Load recent activity
+    await loadRecentActivity();
+    
+    // Setup real-time subscriptions
+    subscribeToCustomerData();
+    
+    // Start auto-refresh
+    startAutoRefresh();
+    
+    console.log('✅ Customer Dashboard ready!');
+    console.log(`👤 Logged in as: ${currentUser?.email}`);
+});
+
+// Handle logout from HTML buttons
+window.addEventListener('customer-logout', () => {
+    AuthService.logout();
+});
 
 console.log('🚀 Orbit Networks Customer Dashboard loaded!');
