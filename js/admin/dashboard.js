@@ -781,88 +781,68 @@ async function loadPackages() {
 }
 
 // ============================================
-// LOAD CUSTOMERS
+// LOAD CUSTOMERS - FIXED
 // ============================================
 async function loadCustomers() {
     console.log('👥 Loading customers...');
     try {
+        // Fix: Use proper join syntax
         const { data, error } = await supabase
             .from('customers')
             .select(`
-                *,
-                profiles:profiles(full_name, phone, email),
-                packages:packages(name, price)
+                id,
+                package_id,
+                data_used_gb,
+                data_limit_gb,
+                wallet_balance,
+                status,
+                expires_at,
+                created_at,
+                profiles!inner (
+                    full_name,
+                    phone,
+                    email
+                ),
+                packages!left (
+                    name,
+                    price
+                )
             `)
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
-
-        // Update stats
-        const total = data?.length || 0;
-        const active = data?.filter(c => c.status === 'active').length || 0;
-        const inactive = data?.filter(c => c.status === 'inactive').length || 0;
-        const suspended = data?.filter(c => c.status === 'suspended').length || 0;
-
-        const totalEl = document.getElementById('customerTotal');
-        const activeEl = document.getElementById('customerActive');
-        const inactiveEl = document.getElementById('customerInactive');
-        const suspendedEl = document.getElementById('customerSuspended');
-
-        if (totalEl) totalEl.textContent = total;
-        if (activeEl) activeEl.textContent = active;
-        if (inactiveEl) inactiveEl.textContent = inactive;
-        if (suspendedEl) suspendedEl.textContent = suspended;
-
-        // Render table
-        const tbody = document.getElementById('customersTableBody');
-        if (!tbody) return;
-
-        if (!data || data.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center text-gray-400 py-8">
-                        <i class="fas fa-users text-4xl mb-4"></i>
-                        <p>No customers found</p>
-                        <button onclick="showAddCustomerModal()" class="mt-4 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition">
-                            <i class="fas fa-user-plus"></i> Add First Customer
-                        </button>
-                    </td>
-                </tr>
-            `;
+        if (error) {
+            console.error('Customers query error:', error);
+            // Try simpler query without joins
+            const { data: simpleData, error: simpleError } = await supabase
+                .from('customers')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (simpleError) throw simpleError;
+            
+            // Get profiles separately
+            const profileIds = simpleData?.map(c => c.id) || [];
+            let profiles = [];
+            if (profileIds.length > 0) {
+                const { data: profileData } = await supabase
+                    .from('profiles')
+                    .select('id, full_name, phone, email')
+                    .in('id', profileIds);
+                profiles = profileData || [];
+            }
+            
+            // Merge data
+            const mergedData = simpleData?.map(customer => ({
+                ...customer,
+                profiles: profiles.find(p => p.id === customer.id)
+            })) || [];
+            
+            renderCustomers(mergedData);
             return;
         }
 
-        tbody.innerHTML = data.map(customer => `
-            <tr class="border-b border-white/5 hover:bg-white/5 transition">
-                <td class="px-4 py-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
-                            <span class="text-sm font-bold text-blue-400">${customer.profiles?.full_name?.charAt(0) || '?'}</span>
-                        </div>
-                        <div>
-                            <p class="text-white text-sm">${customer.profiles?.full_name || 'Unknown'}</p>
-                            <p class="text-xs text-gray-500">${customer.profiles?.email || 'No email'}</p>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-4 py-3 text-gray-300 text-sm">${customer.profiles?.phone || 'N/A'}</td>
-                <td class="px-4 py-3 text-gray-300 text-sm">${customer.packages?.name || 'No Package'}</td>
-                <td class="px-4 py-3">
-                    <span class="px-2 py-1 text-xs rounded-full ${
-                        customer.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
-                        customer.status === 'inactive' ? 'bg-gray-500/20 text-gray-400' :
-                        'bg-red-500/20 text-red-400'
-                    }">${customer.status || 'Unknown'}</span>
-                </td>
-                <td class="px-4 py-3 text-gray-300 text-sm">${customer.data_used_gb || 0} GB</td>
-                <td class="px-4 py-3">
-                    <button onclick="viewCustomer('${customer.id}')" class="text-blue-400 hover:text-blue-300 text-sm">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-
+        renderCustomers(data || []);
+        
     } catch (error) {
         console.error('Error loading customers:', error);
         const tbody = document.getElementById('customersTableBody');
@@ -871,7 +851,10 @@ async function loadCustomers() {
                 <tr>
                     <td colspan="6" class="text-center text-red-400 py-8">
                         <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
-                        <p>Error loading customers</p>
+                        <p>Error loading customers: ${error.message || 'Unknown error'}</p>
+                        <button onclick="loadCustomers()" class="mt-4 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition">
+                            <i class="fas fa-sync-alt"></i> Retry
+                        </button>
                     </td>
                 </tr>
             `;
@@ -879,8 +862,76 @@ async function loadCustomers() {
     }
 }
 
+function renderCustomers(data) {
+    // Update stats
+    const total = data?.length || 0;
+    const active = data?.filter(c => c.status === 'active').length || 0;
+    const inactive = data?.filter(c => c.status === 'inactive').length || 0;
+    const suspended = data?.filter(c => c.status === 'suspended').length || 0;
+
+    const totalEl = document.getElementById('customerTotal');
+    const activeEl = document.getElementById('customerActive');
+    const inactiveEl = document.getElementById('customerInactive');
+    const suspendedEl = document.getElementById('customerSuspended');
+
+    if (totalEl) totalEl.textContent = total;
+    if (activeEl) activeEl.textContent = active;
+    if (inactiveEl) inactiveEl.textContent = inactive;
+    if (suspendedEl) suspendedEl.textContent = suspended;
+
+    // Render table
+    const tbody = document.getElementById('customersTableBody');
+    if (!tbody) return;
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-gray-400 py-8">
+                    <i class="fas fa-users text-4xl mb-4"></i>
+                    <p>No customers found</p>
+                    <button onclick="showAddCustomerModal()" class="mt-4 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition">
+                        <i class="fas fa-user-plus"></i> Add First Customer
+                    </button>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = data.map(customer => `
+        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+            <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+                        <span class="text-sm font-bold text-blue-400">${customer.profiles?.full_name?.charAt(0) || '?'}</span>
+                    </div>
+                    <div>
+                        <p class="text-white text-sm">${customer.profiles?.full_name || 'Unknown'}</p>
+                        <p class="text-xs text-gray-500">${customer.profiles?.email || 'No email'}</p>
+                    </div>
+                </div>
+            </td>
+            <td class="px-4 py-3 text-gray-300 text-sm">${customer.profiles?.phone || 'N/A'}</td>
+            <td class="px-4 py-3 text-gray-300 text-sm">${customer.packages?.name || 'No Package'}</td>
+            <td class="px-4 py-3">
+                <span class="px-2 py-1 text-xs rounded-full ${
+                    customer.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
+                    customer.status === 'inactive' ? 'bg-gray-500/20 text-gray-400' :
+                    'bg-red-500/20 text-red-400'
+                }">${customer.status || 'Unknown'}</span>
+            </td>
+            <td class="px-4 py-3 text-gray-300 text-sm">${customer.data_used_gb || 0} GB</td>
+            <td class="px-4 py-3">
+                <button onclick="viewCustomer('${customer.id}')" class="text-blue-400 hover:text-blue-300 text-sm">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
 // ============================================
-// LOAD PAYMENTS
+// LOAD PAYMENTS - FIXED
 // ============================================
 async function loadPayments() {
     console.log('💳 Loading payments...');
@@ -890,68 +941,30 @@ async function loadPayments() {
             .select(`
                 *,
                 customer:customer_id (
-                    profiles (full_name, phone)
+                    id,
+                    profiles!inner (
+                        full_name,
+                        phone
+                    )
                 )
             `)
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
-
-        // Update stats
-        const total = data?.length || 0;
-        const completed = data?.filter(p => p.status === 'completed').length || 0;
-        const pending = data?.filter(p => p.status === 'pending').length || 0;
-        const failed = data?.filter(p => p.status === 'failed').length || 0;
-        const totalRevenue = data?.filter(p => p.status === 'completed')
-            .reduce((sum, p) => sum + Number(p.amount), 0) || 0;
-
-        const revenueEl = document.getElementById('paymentTotalRevenue');
-        const completedEl = document.getElementById('paymentCompleted');
-        const pendingEl = document.getElementById('paymentPending');
-        const failedEl = document.getElementById('paymentFailed');
-
-        if (revenueEl) revenueEl.textContent = formatCurrency(totalRevenue);
-        if (completedEl) completedEl.textContent = completed;
-        if (pendingEl) pendingEl.textContent = pending;
-        if (failedEl) failedEl.textContent = failed;
-
-        // Render table
-        const tbody = document.getElementById('paymentsTableBody');
-        if (!tbody) return;
-
-        if (!data || data.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center text-gray-400 py-8">
-                        <i class="fas fa-credit-card text-4xl mb-4"></i>
-                        <p>No payments found</p>
-                        <button onclick="showRecordPaymentModal()" class="mt-4 px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition">
-                            <i class="fas fa-plus"></i> Record First Payment
-                        </button>
-                    </td>
-                </tr>
-            `;
+        if (error) {
+            console.error('Payments query error:', error);
+            // Try simpler query
+            const { data: simpleData, error: simpleError } = await supabase
+                .from('payments')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (simpleError) throw simpleError;
+            renderPayments(simpleData || []);
             return;
         }
 
-        tbody.innerHTML = data.map(payment => `
-            <tr class="border-b border-white/5 hover:bg-white/5 transition">
-                <td class="px-4 py-3 text-white text-sm font-mono">${payment.reference || payment.id.slice(0, 8)}</td>
-                <td class="px-4 py-3 text-gray-300 text-sm">${payment.customer?.profiles?.full_name || 'Unknown'}</td>
-                <td class="px-4 py-3 text-green-400 font-bold text-sm">${formatCurrency(payment.amount)}</td>
-                <td class="px-4 py-3 text-gray-300 text-sm">${payment.method || 'N/A'}</td>
-                <td class="px-4 py-3">
-                    <span class="px-2 py-1 text-xs rounded-full ${
-                        payment.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
-                        payment.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                        payment.status === 'failed' ? 'bg-red-500/20 text-red-400' :
-                        'bg-gray-500/20 text-gray-400'
-                    }">${payment.status || 'Unknown'}</span>
-                </td>
-                <td class="px-4 py-3 text-gray-400 text-sm">${formatDate(payment.created_at)}</td>
-            </tr>
-        `).join('');
-
+        renderPayments(data || []);
+        
     } catch (error) {
         console.error('Error loading payments:', error);
         const tbody = document.getElementById('paymentsTableBody');
@@ -960,12 +973,72 @@ async function loadPayments() {
                 <tr>
                     <td colspan="6" class="text-center text-red-400 py-8">
                         <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
-                        <p>Error loading payments</p>
+                        <p>Error loading payments: ${error.message || 'Unknown error'}</p>
+                        <button onclick="loadPayments()" class="mt-4 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition">
+                            <i class="fas fa-sync-alt"></i> Retry
+                        </button>
                     </td>
                 </tr>
             `;
         }
     }
+}
+
+function renderPayments(data) {
+    // Update stats
+    const total = data?.length || 0;
+    const completed = data?.filter(p => p.status === 'completed').length || 0;
+    const pending = data?.filter(p => p.status === 'pending').length || 0;
+    const failed = data?.filter(p => p.status === 'failed').length || 0;
+    const totalRevenue = data?.filter(p => p.status === 'completed')
+        .reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+
+    const revenueEl = document.getElementById('paymentTotalRevenue');
+    const completedEl = document.getElementById('paymentCompleted');
+    const pendingEl = document.getElementById('paymentPending');
+    const failedEl = document.getElementById('paymentFailed');
+
+    if (revenueEl) revenueEl.textContent = formatCurrency(totalRevenue);
+    if (completedEl) completedEl.textContent = completed;
+    if (pendingEl) pendingEl.textContent = pending;
+    if (failedEl) failedEl.textContent = failed;
+
+    // Render table
+    const tbody = document.getElementById('paymentsTableBody');
+    if (!tbody) return;
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-gray-400 py-8">
+                    <i class="fas fa-credit-card text-4xl mb-4"></i>
+                    <p>No payments found</p>
+                    <button onclick="showRecordPaymentModal()" class="mt-4 px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition">
+                        <i class="fas fa-plus"></i> Record First Payment
+                    </button>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = data.map(payment => `
+        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+            <td class="px-4 py-3 text-white text-sm font-mono">${payment.reference || payment.id.slice(0, 8)}</td>
+            <td class="px-4 py-3 text-gray-300 text-sm">${payment.customer?.profiles?.full_name || 'Unknown'}</td>
+            <td class="px-4 py-3 text-green-400 font-bold text-sm">${formatCurrency(payment.amount)}</td>
+            <td class="px-4 py-3 text-gray-300 text-sm">${payment.method || 'N/A'}</td>
+            <td class="px-4 py-3">
+                <span class="px-2 py-1 text-xs rounded-full ${
+                    payment.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
+                    payment.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                    payment.status === 'failed' ? 'bg-red-500/20 text-red-400' :
+                    'bg-gray-500/20 text-gray-400'
+                }">${payment.status || 'Unknown'}</span>
+            </td>
+            <td class="px-4 py-3 text-gray-400 text-sm">${formatDate(payment.created_at)}</td>
+        </tr>
+    `).join('');
 }
 
 // ============================================
@@ -1337,12 +1410,15 @@ async function loadCustomersForDropdown() {
 // ============================================
 // FORM SUBMISSIONS
 // ============================================
+// ============================================
+// ADD CUSTOMER FORM - FIXED
+// ============================================
 document.getElementById('addCustomerForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const fullName = document.getElementById('customerFullName')?.value;
-    const phone = document.getElementById('customerPhone')?.value;
-    const email = document.getElementById('customerEmail')?.value;
+    const fullName = document.getElementById('customerFullName')?.value?.trim();
+    const phone = document.getElementById('customerPhone')?.value?.trim();
+    const email = document.getElementById('customerEmail')?.value?.trim();
     const packageId = document.getElementById('customerPackage')?.value;
     const status = document.getElementById('customerStatus')?.value;
     
@@ -1352,9 +1428,35 @@ document.getElementById('addCustomerForm')?.addEventListener('submit', async (e)
     }
     
     try {
+        // ✅ Generate a UUID for the customer
+        const customerId = crypto.randomUUID ? crypto.randomUUID() : generateId();
+        console.log('📝 Creating customer with ID:', customerId);
+        
+        // ✅ Step 1: Create the profile FIRST (this is the parent table)
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([{
+                id: customerId,
+                full_name: fullName,
+                phone: phone,
+                email: email || null,
+                role: 'customer',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            }]);
+        
+        if (profileError) {
+            console.error('Profile creation error:', profileError);
+            throw new Error('Failed to create profile: ' + profileError.message);
+        }
+        
+        console.log('✅ Profile created for:', customerId);
+        
+        // ✅ Step 2: Create the customer with the SAME ID
         const { data: customer, error: customerError } = await supabase
             .from('customers')
             .insert([{
+                id: customerId,  // ✅ Use the same UUID
                 package_id: packageId || null,
                 status: status || 'active',
                 wallet_balance: 0,
@@ -1365,25 +1467,23 @@ document.getElementById('addCustomerForm')?.addEventListener('submit', async (e)
             .select()
             .single();
         
-        if (customerError) throw customerError;
+        if (customerError) {
+            console.error('Customer creation error:', customerError);
+            // If customer creation fails, delete the profile we just created
+            await supabase.from('profiles').delete().eq('id', customerId);
+            throw new Error('Failed to create customer: ' + customerError.message);
+        }
         
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .insert([{
-                id: customer.id,
-                full_name: fullName,
-                phone: phone,
-                email: email,
-                role: 'customer',
-                created_at: new Date().toISOString()
-            }]);
-        
-        if (profileError) throw profileError;
-        
+        console.log('✅ Customer created:', customer);
         showToast(`Customer ${fullName} created successfully!`, 'success');
         window.closeAddCustomerModal();
+        
+        // Refresh data
         loadCustomers();
         loadAllDashboardData();
+        
+        // Reset form
+        document.getElementById('addCustomerForm').reset();
         
     } catch (error) {
         console.error('Error creating customer:', error);
@@ -1391,12 +1491,15 @@ document.getElementById('addCustomerForm')?.addEventListener('submit', async (e)
     }
 });
 
+// ============================================
+// ADD PACKAGE FORM - FIXED
+// ============================================
 document.getElementById('addPackageForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const name = document.getElementById('packageName')?.value;
+    const name = document.getElementById('packageName')?.value?.trim();
     const price = parseFloat(document.getElementById('packagePrice')?.value);
-    const speed = document.getElementById('packageSpeed')?.value;
+    const speed = document.getElementById('packageSpeed')?.value?.trim();
     const dataLimit = parseFloat(document.getElementById('packageDataLimit')?.value);
     const validity = parseInt(document.getElementById('packageValidity')?.value);
     
@@ -1406,6 +1509,7 @@ document.getElementById('addPackageForm')?.addEventListener('submit', async (e) 
     }
     
     try {
+        // ✅ Package ID will be auto-generated by Supabase
         const { data, error } = await supabase
             .from('packages')
             .insert([{
@@ -1415,6 +1519,7 @@ document.getElementById('addPackageForm')?.addEventListener('submit', async (e) 
                 data_limit_gb: dataLimit || 0,
                 validity_days: validity,
                 is_active: true,
+                features: {},
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             }])
@@ -1426,6 +1531,9 @@ document.getElementById('addPackageForm')?.addEventListener('submit', async (e) 
         window.closeAddPackageModal();
         loadPackages();
         loadAllDashboardData();
+        
+        // Reset form
+        document.getElementById('addPackageForm').reset();
         
     } catch (error) {
         console.error('Error creating package:', error);
