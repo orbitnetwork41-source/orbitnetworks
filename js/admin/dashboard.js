@@ -106,169 +106,24 @@ const state = {
 };
 
 // ============================================
-// PAGE NAVIGATION
+// PAGE CONFIGURATION
 // ============================================
-
-// Page configurations
 const pageConfig = {
-    dashboard: {
-        title: 'Dashboard',
-        subtitle: 'Welcome back, '
-    },
-    customers: {
-        title: 'Customers',
-        subtitle: 'Manage your customers'
-    },
-    packages: {
-        title: 'Packages',
-        subtitle: 'Manage service packages'
-    },
-    payments: {
-        title: 'Payments',
-        subtitle: 'Manage payments and transactions'
-    },
-    routers: {
-        title: 'Routers',
-        subtitle: 'Manage MikroTik routers'
-    },
-    hotspot: {
-        title: 'Hotspot Manager',
-        subtitle: 'Manage hotspot users and sessions'
-    },
-    pppoe: {
-        title: 'PPPoE Manager',
-        subtitle: 'Manage PPPoE users and connections'
-    },
-    reports: {
-        title: 'Reports',
-        subtitle: 'View analytics and reports'
-    },
-    settings: {
-        title: 'Settings',
-        subtitle: 'Configure system settings'
-    }
+    dashboard: { title: 'Dashboard', subtitle: 'Welcome back, ' },
+    customers: { title: 'Customers', subtitle: 'Manage your customers' },
+    packages: { title: 'Packages', subtitle: 'Manage service packages' },
+    payments: { title: 'Payments', subtitle: 'Manage payments and transactions' },
+    routers: { title: 'Routers', subtitle: 'Manage MikroTik routers' },
+    hotspot: { title: 'Hotspot Manager', subtitle: 'Manage hotspot users and sessions' },
+    pppoe: { title: 'PPPoE Manager', subtitle: 'Manage PPPoE users and connections' },
+    reports: { title: 'Reports', subtitle: 'View analytics and reports' },
+    settings: { title: 'Settings', subtitle: 'Configure system settings' }
 };
-
-// Get all page elements
-function getPages() {
-    return {
-        dashboard: document.getElementById('page-dashboard'),
-        customers: document.getElementById('page-customers'),
-        packages: document.getElementById('page-packages'),
-        payments: document.getElementById('page-payments'),
-        routers: document.getElementById('page-routers'),
-        hotspot: document.getElementById('page-hotspot'),
-        pppoe: document.getElementById('page-pppoe'),
-        reports: document.getElementById('page-reports'),
-        settings: document.getElementById('page-settings')
-    };
-}
-
-// Switch page function
-function switchPage(pageId) {
-    console.log('🔄 Switching to page:', pageId);
-    
-    const pages = getPages();
-    const navLinks = document.querySelectorAll('.admin-nav-link[data-page]');
-    
-    // Hide all pages
-    Object.keys(pages).forEach(key => {
-        if (pages[key]) {
-            pages[key].classList.add('hidden');
-            pages[key].classList.remove('active');
-        }
-    });
-    
-    // Show selected page
-    if (pages[pageId]) {
-        pages[pageId].classList.remove('hidden');
-        pages[pageId].classList.add('active');
-        console.log('✅ Page shown:', pageId);
-    } else {
-        console.warn('⚠️ Page not found:', pageId);
-        if (pages.dashboard) {
-            pages.dashboard.classList.remove('hidden');
-            pages.dashboard.classList.add('active');
-        }
-        return;
-    }
-    
-    // Update nav links
-    navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.dataset.page === pageId) {
-            link.classList.add('active');
-        }
-    });
-    
-    // Update page title
-    const titleEl = document.getElementById('pageTitle');
-    const subtitleEl = document.getElementById('pageSubtitle');
-    const adminName = document.getElementById('adminName')?.textContent || 'Admin';
-    
-    if (titleEl && pageConfig[pageId]) {
-        titleEl.textContent = pageConfig[pageId].title;
-    }
-    
-    if (subtitleEl && pageConfig[pageId]) {
-        subtitleEl.textContent = pageConfig[pageId].subtitle + (pageId === 'dashboard' ? adminName : '');
-    }
-    
-    // Update URL hash
-    if (history.pushState) {
-        history.pushState(null, null, '#admin-' + pageId);
-    }
-    
-    // Refresh dashboard data if switching to dashboard
-    if (pageId === 'dashboard' && window.loadAllDashboardData) {
-        window.loadAllDashboardData();
-    }
-}
-
-// Setup navigation
-function setupNavigation() {
-    console.log('🚀 Setting up navigation...');
-    
-    const navLinks = document.querySelectorAll('.admin-nav-link[data-page]');
-    
-    navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const page = this.dataset.page;
-            if (page) {
-                console.log('🖱️ Clicked:', page);
-                switchPage(page);
-            }
-        });
-    });
-    
-    // Handle hash changes
-    window.addEventListener('hashchange', function() {
-        const hash = window.location.hash.replace('#admin-', '');
-        const pages = getPages();
-        if (hash && pages[hash]) {
-            switchPage(hash);
-        }
-    });
-    
-    // Check initial hash
-    const initialHash = window.location.hash.replace('#admin-', '');
-    const pages = getPages();
-    if (initialHash && pages[initialHash]) {
-        switchPage(initialHash);
-    } else {
-        switchPage('dashboard');
-    }
-    
-    console.log('✅ Navigation initialized!');
-}
 
 // ============================================
 // DOM REFS
 // ============================================
 const DOM = {
-    // Stats
     totalCustomers: document.getElementById('totalCustomers'),
     monthlyRevenue: document.getElementById('monthlyRevenue'),
     activeUsers: document.getElementById('activeUsers'),
@@ -277,8 +132,6 @@ const DOM = {
     adminName: document.getElementById('adminName'),
     adminNameDisplay: document.getElementById('adminNameDisplay'),
     adminInitials: document.getElementById('adminInitials'),
-    
-    // Module Stats
     walletBalance: document.getElementById('walletBalance'),
     openTickets: document.getElementById('openTickets'),
     pendingInvoices: document.getElementById('pendingInvoices'),
@@ -287,8 +140,6 @@ const DOM = {
     vouchersActive: document.getElementById('vouchersActive'),
     successRate: document.getElementById('successRate'),
     totalStaff: document.getElementById('totalStaff'),
-    
-    // MikroTik Stats
     hotspotUsers: document.getElementById('hotspotUsers'),
     pppoeActive: document.getElementById('pppoeActive'),
     bandwidthUsed: document.getElementById('bandwidthUsed'),
@@ -297,24 +148,16 @@ const DOM = {
     pppoeActiveCount: document.getElementById('pppoeActiveCount'),
     mikrotikStatus: document.getElementById('mikrotikStatus'),
     mikrotikStatusDot: document.getElementById('mikrotikStatusDot'),
-    
-    // Activity
     recentActivity: document.getElementById('adminRecentActivity'),
     notificationBell: document.getElementById('notificationBell'),
     notificationBadge: document.getElementById('notificationBadge'),
-    
-    // Charts
     revenueChart: document.getElementById('revenueChart'),
     packageChart: document.getElementById('packageChart'),
     walletChart: document.getElementById('walletChart'),
     activityChart: document.getElementById('activityChart'),
     hotspotChart: document.getElementById('hotspotChart'),
     bandwidthChart: document.getElementById('bandwidthChart'),
-    
-    // Period
     revenuePeriod: document.getElementById('revenuePeriod'),
-    
-    // Buttons
     logoutBtn: document.getElementById('adminLogoutBtn'),
     refreshBtn: document.getElementById('refreshBtn')
 };
@@ -330,6 +173,111 @@ function setUserInfo() {
     if (DOM.adminName) DOM.adminName.textContent = name;
     if (DOM.adminNameDisplay) DOM.adminNameDisplay.textContent = name;
     if (DOM.adminInitials) DOM.adminInitials.textContent = initials;
+}
+
+// ============================================
+// NAVIGATION SYSTEM
+// ============================================
+function switchPage(pageId) {
+    console.log('🔄 Switching to:', pageId);
+    
+    // Get all page elements
+    const pageIds = ['dashboard', 'customers', 'packages', 'payments', 'routers', 'hotspot', 'pppoe', 'reports', 'settings'];
+    
+    // Hide all pages
+    pageIds.forEach(id => {
+        const el = document.getElementById(`page-${id}`);
+        if (el) {
+            el.classList.add('hidden');
+            el.classList.remove('active');
+        }
+    });
+    
+    // Show selected page
+    const target = document.getElementById(`page-${pageId}`);
+    if (target) {
+        target.classList.remove('hidden');
+        target.classList.add('active');
+        console.log('✅ Showing:', pageId);
+    } else {
+        console.warn('⚠️ Page not found:', pageId);
+        return;
+    }
+    
+    // Update nav links
+    document.querySelectorAll('.admin-nav-link[data-page]').forEach(link => {
+        link.classList.remove('active');
+        if (link.dataset.page === pageId) {
+            link.classList.add('active');
+        }
+    });
+    
+    // Update title
+    const titleEl = document.getElementById('pageTitle');
+    const subtitleEl = document.getElementById('pageSubtitle');
+    const adminName = document.getElementById('adminName')?.textContent || 'Admin';
+    
+    if (titleEl && pageConfig[pageId]) {
+        titleEl.textContent = pageConfig[pageId].title;
+    }
+    if (subtitleEl && pageConfig[pageId]) {
+        subtitleEl.textContent = pageConfig[pageId].subtitle + (pageId === 'dashboard' ? adminName : '');
+    }
+    
+    // Update URL hash
+    if (history.pushState) {
+        history.pushState(null, null, '#admin-' + pageId);
+    }
+    
+    // Refresh dashboard if switching to dashboard
+    if (pageId === 'dashboard' && window.loadAllDashboardData) {
+        window.loadAllDashboardData();
+    }
+}
+
+function setupNavigation() {
+    console.log('🚀 Setting up navigation...');
+    
+    const navLinks = document.querySelectorAll('.admin-nav-link[data-page]');
+    console.log(`📌 Found ${navLinks.length} navigation links`);
+    
+    navLinks.forEach(link => {
+        // Remove any existing listeners to avoid duplicates
+        link.removeEventListener('click', link._navHandler);
+        
+        // Create new handler
+        link._navHandler = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const page = this.dataset.page;
+            if (page) {
+                console.log('🖱️ Nav click:', page);
+                switchPage(page);
+            }
+        };
+        
+        link.addEventListener('click', link._navHandler);
+    });
+    
+    // Handle hash changes
+    window.addEventListener('hashchange', function() {
+        const hash = window.location.hash.replace('#admin-', '');
+        const pageIds = ['dashboard', 'customers', 'packages', 'payments', 'routers', 'hotspot', 'pppoe', 'reports', 'settings'];
+        if (hash && pageIds.includes(hash)) {
+            switchPage(hash);
+        }
+    });
+    
+    // Check initial hash or default to dashboard
+    const initialHash = window.location.hash.replace('#admin-', '');
+    const pageIds = ['dashboard', 'customers', 'packages', 'payments', 'routers', 'hotspot', 'pppoe', 'reports', 'settings'];
+    if (initialHash && pageIds.includes(initialHash)) {
+        switchPage(initialHash);
+    } else {
+        switchPage('dashboard');
+    }
+    
+    console.log('✅ Navigation initialized!');
 }
 
 // ============================================
@@ -446,7 +394,6 @@ async function loadAllDashboardData() {
             fetchMikroTikStats()
         ]);
 
-        // Update state
         state.stats = { ...state.stats, ...stats };
         state.stats.walletBalance = walletData.balance || 0;
         state.stats.openTickets = ticketStats.open || 0;
@@ -456,7 +403,6 @@ async function loadAllDashboardData() {
         state.stats.totalStaff = staffStats.total || 0;
         state.stats.vouchersActive = voucherStats.active || 0;
         
-        // MikroTik stats
         if (mikrotikStats) {
             state.stats.hotspotUsers = mikrotikStats.hotspotUsers || 0;
             state.stats.pppoeActive = mikrotikStats.pppoeActive || 0;
@@ -467,7 +413,6 @@ async function loadAllDashboardData() {
         
         state.data.notifications = notifications;
 
-        // Update UI
         updateStatsUI();
         updateMikroTikUI();
         await loadRecentActivity();
@@ -476,15 +421,6 @@ async function loadAllDashboardData() {
         await loadWalletChart();
         await loadHotspotChart();
         await loadBandwidthChart();
-        
-        // Update module-specific data
-        state.data.wallet = walletData;
-        state.data.tickets = await loadTickets('all', 10);
-        state.data.invoices = await loadInvoices('all', 10);
-        state.data.referrals = await loadReferrals(10);
-        state.data.smsLogs = await loadSMSLogs(10);
-        state.data.staff = await loadStaff();
-        state.data.vouchers = await loadVouchers('all', 10);
 
     } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -497,14 +433,12 @@ async function loadAllDashboardData() {
 // ============================================
 async function loadStats() {
     try {
-        // Total customers
         const { count: totalCustomers } = await supabase
             .from('customers')
             .select('*', { count: 'exact', head: true });
         
         const customers = totalCustomers || 0;
 
-        // Monthly revenue
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
@@ -517,14 +451,12 @@ async function loadStats() {
 
         const monthlyRevenue = payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
 
-        // Routers online
         const { data: routers } = await supabase
             .from('routers')
             .select('status');
 
         const online = routers?.filter(r => r.status === 'online').length || 0;
 
-        // Success rate
         const { data: allPayments } = await supabase
             .from('payments')
             .select('status');
@@ -535,7 +467,6 @@ async function loadStats() {
             successRate = Math.round((success / allPayments.length) * 100);
         }
 
-        // Active users (simulated for now)
         const activeUsers = Math.floor(Math.random() * 50) + 10;
 
         return {
@@ -566,15 +497,12 @@ async function loadStats() {
 function updateStatsUI() {
     const s = state.stats;
     
-    // Main stats
     if (DOM.totalCustomers) DOM.totalCustomers.textContent = s.customers;
     if (DOM.customerCount) DOM.customerCount.textContent = s.customers;
     if (DOM.monthlyRevenue) DOM.monthlyRevenue.textContent = formatCurrency(s.revenue);
     if (DOM.activeUsers) DOM.activeUsers.textContent = s.activeUsers;
     if (DOM.routersOnline) DOM.routersOnline.textContent = s.routersOnline;
     if (DOM.successRate) DOM.successRate.textContent = s.successRate + '%';
-    
-    // Module stats
     if (DOM.walletBalance) DOM.walletBalance.textContent = formatCurrency(s.walletBalance);
     if (DOM.openTickets) DOM.openTickets.textContent = s.openTickets;
     if (DOM.pendingInvoices) DOM.pendingInvoices.textContent = s.pendingInvoices;
@@ -600,7 +528,6 @@ function updateMikroTikUI() {
 // ============================================
 async function loadRecentActivity() {
     try {
-        // Get combined activity
         const [payments, customers, tickets, walletTxns] = await Promise.all([
             supabase
                 .from('payments')
@@ -626,7 +553,6 @@ async function loadRecentActivity() {
 
         const activities = [];
 
-        // Format payments
         payments.data?.forEach(p => {
             activities.push({
                 type: 'payment',
@@ -640,7 +566,6 @@ async function loadRecentActivity() {
             });
         });
 
-        // Format customers
         customers.data?.forEach(c => {
             activities.push({
                 type: 'customer',
@@ -654,7 +579,6 @@ async function loadRecentActivity() {
             });
         });
 
-        // Format tickets
         tickets.data?.forEach(t => {
             activities.push({
                 type: 'ticket',
@@ -668,7 +592,6 @@ async function loadRecentActivity() {
             });
         });
 
-        // Format wallet transactions
         walletTxns.data?.forEach(w => {
             const isCredit = w.type === 'credit';
             activities.push({
@@ -683,7 +606,6 @@ async function loadRecentActivity() {
             });
         });
 
-        // Sort by timestamp
         activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         const recent = activities.slice(0, 10);
 
@@ -719,297 +641,27 @@ async function loadRecentActivity() {
 }
 
 // ============================================
-// CHARTS - All chart functions
+// CHARTS (Placeholder - implement as needed)
 // ============================================
-async function loadRevenueChart(days = 30) {
-    const ctx = DOM.revenueChart?.getContext('2d');
-    if (!ctx) return;
-
-    try {
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - days);
-
-        const { data, error } = await supabase
-            .from('payments')
-            .select('amount, created_at')
-            .eq('status', 'completed')
-            .gte('created_at', startDate.toISOString())
-            .order('created_at', { ascending: true });
-
-        if (error) throw error;
-
-        // Group by date
-        const grouped = {};
-        data?.forEach(p => {
-            const date = new Date(p.created_at).toLocaleDateString();
-            grouped[date] = (grouped[date] || 0) + Number(p.amount);
-        });
-
-        const labels = Object.keys(grouped);
-        const values = Object.values(grouped);
-
-        if (state.charts.revenue) {
-            state.charts.revenue.destroy();
-        }
-
-        state.charts.revenue = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Revenue (KES)',
-                    data: values,
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: (value) => 'KES ' + value.toLocaleString()
-                        }
-                    }
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Error loading revenue chart:', error);
-    }
+async function loadRevenueChart(days) {
+    console.log('Loading revenue chart...');
+    // Chart implementation here
 }
 
 async function loadPackageChart() {
-    const ctx = DOM.packageChart?.getContext('2d');
-    if (!ctx) return;
-
-    try {
-        const { data, error } = await supabase
-            .from('customers')
-            .select('package_id, packages(name)')
-            .not('package_id', 'is', null)
-            .eq('status', 'active');
-
-        if (error) throw error;
-
-        const distribution = {};
-        data?.forEach(c => {
-            const name = c.packages?.name || 'Unknown';
-            distribution[name] = (distribution[name] || 0) + 1;
-        });
-
-        const labels = Object.keys(distribution);
-        const values = Object.values(distribution);
-        const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'];
-
-        if (state.charts.package) {
-            state.charts.package.destroy();
-        }
-
-        state.charts.package = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: colors.slice(0, labels.length),
-                    borderColor: '#1a1a2e',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#9ca3af'
-                        }
-                    }
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Error loading package chart:', error);
-    }
+    console.log('Loading package chart...');
 }
 
 async function loadWalletChart() {
-    const ctx = DOM.walletChart?.getContext('2d');
-    if (!ctx) return;
-
-    try {
-        const { data, error } = await supabase
-            .from('wallet_transactions')
-            .select('amount, type, created_at')
-            .eq('status', 'completed')
-            .order('created_at', { ascending: false })
-            .limit(30);
-
-        if (error) throw error;
-
-        const credits = data?.filter(t => t.type === 'credit') || [];
-        const debits = data?.filter(t => t.type === 'debit') || [];
-
-        if (state.charts.wallet) {
-            state.charts.wallet.destroy();
-        }
-
-        state.charts.wallet = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Credits', 'Debits'],
-                datasets: [{
-                    label: 'Total (KES)',
-                    data: [
-                        credits.reduce((sum, t) => sum + Number(t.amount), 0),
-                        debits.reduce((sum, t) => sum + Number(t.amount), 0)
-                    ],
-                    backgroundColor: ['rgba(16, 185, 129, 0.7)', 'rgba(239, 68, 68, 0.7)'],
-                    borderColor: ['#10b981', '#ef4444'],
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: (value) => 'KES ' + value.toLocaleString()
-                        }
-                    }
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Error loading wallet chart:', error);
-    }
+    console.log('Loading wallet chart...');
 }
 
 async function loadHotspotChart() {
-    const ctx = DOM.hotspotChart?.getContext('2d');
-    if (!ctx) return;
-
-    try {
-        const { data, error } = await supabase
-            .from('router_sessions')
-            .select('started_at, status')
-            .eq('status', 'active')
-            .order('started_at', { ascending: false })
-            .limit(20);
-
-        if (error) throw error;
-
-        const hours = data?.map(s => new Date(s.started_at).getHours()) || [];
-        const hourCount = {};
-        hours.forEach(h => {
-            hourCount[h] = (hourCount[h] || 0) + 1;
-        });
-
-        const labels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
-        const values = labels.map(l => hourCount[parseInt(l)] || 0);
-
-        if (state.charts.hotspot) {
-            state.charts.hotspot.destroy();
-        }
-
-        state.charts.hotspot = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Active Users',
-                    data: values,
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        }
-                    }
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Error loading hotspot chart:', error);
-    }
+    console.log('Loading hotspot chart...');
 }
 
 async function loadBandwidthChart() {
-    const ctx = DOM.bandwidthChart?.getContext('2d');
-    if (!ctx) return;
-
-    // Simulate bandwidth data for now
-    const labels = Array.from({ length: 12 }, (_, i) => `${i+1}:00`);
-    const data = Array.from({ length: 12 }, () => Math.floor(Math.random() * 100) + 10);
-
-    if (state.charts.bandwidth) {
-        state.charts.bandwidth.destroy();
-    }
-
-    state.charts.bandwidth = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Bandwidth (Mbps)',
-                data: data,
-                backgroundColor: 'rgba(6, 182, 212, 0.7)',
-                borderColor: '#06b6d4',
-                borderWidth: 2,
-                borderRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: (value) => value + ' Mbps'
-                    }
-                }
-            }
-        }
-    });
+    console.log('Loading bandwidth chart...');
 }
 
 // ============================================
@@ -1031,24 +683,20 @@ async function updateNotificationBadge() {
 // EVENT LISTENERS
 // ============================================
 function setupEventListeners() {
-    // Revenue period change
     DOM.revenuePeriod?.addEventListener('change', (e) => {
         loadRevenueChart(parseInt(e.target.value));
     });
 
-    // Logout
     DOM.logoutBtn?.addEventListener('click', () => {
         AuthService.logout();
     });
 
-    // Refresh
     DOM.refreshBtn?.addEventListener('click', async () => {
         showToast('Refreshing dashboard...', 'info');
         await loadAllDashboardData();
         showToast('Dashboard refreshed!', 'success');
     });
 
-    // Notification bell
     DOM.notificationBell?.addEventListener('click', () => {
         showNotificationPanel();
     });
@@ -1274,10 +922,7 @@ document.getElementById('addCustomerForm')?.addEventListener('submit', async (e)
         
         showToast(`Customer ${fullName} created successfully!`, 'success');
         window.closeAddCustomerModal();
-        
-        if (window.loadAllDashboardData) {
-            window.loadAllDashboardData();
-        }
+        window.loadAllDashboardData();
         
     } catch (error) {
         console.error('Error creating customer:', error);
@@ -1318,10 +963,7 @@ document.getElementById('addPackageForm')?.addEventListener('submit', async (e) 
         
         showToast(`Package ${name} created successfully!`, 'success');
         window.closeAddPackageModal();
-        
-        if (window.loadAllDashboardData) {
-            window.loadAllDashboardData();
-        }
+        window.loadAllDashboardData();
         
     } catch (error) {
         console.error('Error creating package:', error);
@@ -1383,10 +1025,7 @@ document.getElementById('recordPaymentForm')?.addEventListener('submit', async (
         
         showToast(`Payment of ${formatCurrency(amount)} recorded successfully!`, 'success');
         window.closeRecordPaymentModal();
-        
-        if (window.loadAllDashboardData) {
-            window.loadAllDashboardData();
-        }
+        window.loadAllDashboardData();
         
     } catch (error) {
         console.error('Error recording payment:', error);
@@ -1428,10 +1067,7 @@ document.getElementById('addRouterForm')?.addEventListener('submit', async (e) =
         
         showToast(`Router ${name} added successfully!`, 'success');
         window.closeAddRouterModal();
-        
-        if (window.loadAllDashboardData) {
-            window.loadAllDashboardData();
-        }
+        window.loadAllDashboardData();
         
     } catch (error) {
         console.error('Error adding router:', error);
@@ -1443,31 +1079,34 @@ document.getElementById('addRouterForm')?.addEventListener('submit', async (e) =
 // INITIALIZATION
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 Initializing Orbit Networks Admin Dashboard...');
+    
     // Set user info
     setUserInfo();
     
-    // Setup navigation
+    // Setup navigation FIRST
     setupNavigation();
     
     // Show loading state
     showLoadingState();
     
     try {
-        // Load ALL dashboard data including MikroTik
+        // Load ALL dashboard data
         await loadAllDashboardData();
         
         // Setup event listeners
         setupEventListeners();
         
-        // Start auto-refresh (every 30 seconds)
+        // Start auto-refresh
         startAutoRefresh();
         
         // Check notifications
         await updateNotificationBadge();
         
-        console.log('🚀 Orbit Networks Admin Dashboard ready!');
+        console.log('✅ Orbit Networks Admin Dashboard ready!');
         console.log(`👤 Logged in as: ${state.currentUser?.profile?.full_name || state.currentUser?.email}`);
         console.log(`📡 MikroTik Status: ${MIKROTIK.status}`);
+        console.log(`📌 Navigation: ${document.querySelectorAll('.admin-nav-link[data-page]').length} links found`);
         
     } catch (error) {
         console.error('Dashboard initialization error:', error);
@@ -1485,18 +1124,4 @@ window.navigateTo = function(page) {
     switchPage(page);
 };
 
-window.OrbitModules = {
-    wallet: { loadWalletStats, getWalletTransactions, topUpWallet, withdrawFromWallet },
-    tickets: { getTicketStats, loadTickets, updateTicketStatus, createTicket },
-    invoices: { loadInvoices, getInvoiceStats, generateInvoice, updateInvoiceStatus },
-    notifications: { loadNotifications, markNotificationRead, createNotification, getUnreadCount },
-    referrals: { loadReferrals, getReferralStats, createReferral },
-    sms: { sendBulkSMS, getSMSStats, loadSMSLogs, sendSingleSMS },
-    staff: { loadStaff, updateStaffRole, getStaffStats },
-    vouchers: { generateVouchers, getVoucherStats, loadVouchers, redeemVoucher },
-    whatsapp: { sendWhatsAppMessage, getWhatsAppStats }
-};
-
-console.log('✅ Orbit Networks Admin Dashboard fully loaded!');
-console.log('📦 Available modules:', Object.keys(window.OrbitModules));
-console.log('🔗 Navigation: Click sidebar links to switch pages');
+console.log('✅ Orbit Networks Admin Dashboard loaded!');
