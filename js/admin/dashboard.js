@@ -14,7 +14,7 @@ import {
 } from '../utils/helpers.js';
 
 // ============================================
-// IMPORT ALL MODULES - FIXED PATHS (same folder, no /modules/)
+// IMPORT ALL MODULES
 // ============================================
 import { loadWalletStats, getWalletTransactions, topUpWallet, withdrawFromWallet } from './wallet.js';
 import { getTicketStats, loadTickets, updateTicketStatus, createTicket } from './tickets.js';
@@ -27,10 +27,10 @@ import { generateVouchers, getVoucherStats, loadVouchers, redeemVoucher } from '
 import { sendWhatsAppMessage, getWhatsAppStats } from './whatsapp.js';
 
 // ============================================
-// MIKROTIK API CONFIGURATION - FIXED
+// MIKROTIK API CONFIGURATION
 // ============================================
 const MIKROTIK = {
-    baseUrl: '/api/mikrotik', // Use relative path, not env var
+    baseUrl: '/api/mikrotik',
     timeout: 10000,
     status: 'disconnected',
     stats: {
@@ -40,93 +40,6 @@ const MIKROTIK = {
         routerCount: 0
     }
 };
-
-// Check if MikroTik API is available
-async function checkMikroTikAvailability() {
-    try {
-        const response = await fetch(`${MIKROTIK.baseUrl}/health`, {
-            method: 'GET',
-            signal: AbortSignal.timeout(3000)
-        });
-        return response.ok;
-    } catch {
-        return false;
-    }
-}
-
-// Updated fetchMikroTikStats with better error handling
-async function fetchMikroTikStats() {
-    try {
-        // First check if API is available
-        const isAvailable = await checkMikroTikAvailability();
-        
-        if (!isAvailable) {
-            console.warn('MikroTik API not available, using simulated data');
-            MIKROTIK.status = 'disconnected';
-            updateMikroTikStatus(false);
-            // Return simulated data
-            return {
-                hotspotUsers: Math.floor(Math.random() * 30) + 5,
-                pppoeActive: Math.floor(Math.random() * 20) + 3,
-                bandwidthUsed: Math.floor(Math.random() * 100) + 10,
-                routerCount: Math.floor(Math.random() * 5) + 1
-            };
-        }
-
-        const response = await fetch(`${MIKROTIK.baseUrl}/stats`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('mikrotik_token') || ''}`
-            },
-            signal: AbortSignal.timeout(MIKROTIK.timeout)
-        });
-
-        if (!response.ok) {
-            throw new Error('MikroTik API error');
-        }
-
-        const data = await response.json();
-        
-        MIKROTIK.status = 'connected';
-        MIKROTIK.stats = {
-            hotspotUsers: data.hotspot_active || 0,
-            pppoeActive: data.pppoe_active || 0,
-            bandwidthUsed: data.bandwidth_used || 0,
-            routerCount: data.routers_online || 0
-        };
-
-        updateMikroTikStatus(true);
-        return MIKROTIK.stats;
-
-    } catch (error) {
-        console.warn('MikroTik API error:', error.message);
-        MIKROTIK.status = 'disconnected';
-        updateMikroTikStatus(false);
-        // Return simulated data for demo
-        return {
-            hotspotUsers: Math.floor(Math.random() * 30) + 5,
-            pppoeActive: Math.floor(Math.random() * 20) + 3,
-            bandwidthUsed: Math.floor(Math.random() * 100) + 10,
-            routerCount: Math.floor(Math.random() * 5) + 1
-        };
-    }
-}
-
-function updateMikroTikStatus(connected) {
-    const statusText = DOM.mikrotikStatus;
-    const statusDot = DOM.mikrotikStatusDot;
-    
-    if (!statusText || !statusDot) return;
-    
-    if (connected) {
-        statusText.textContent = 'MikroTik: Connected';
-        statusDot.className = 'w-2 h-2 bg-green-400 rounded-full animate-pulse';
-    } else {
-        statusText.textContent = 'MikroTik: Simulated';
-        statusDot.className = 'w-2 h-2 bg-yellow-400 rounded-full';
-    }
-}
 
 // ============================================
 // AUTH CHECK
@@ -165,7 +78,6 @@ const state = {
         totalRevenue: 0,
         successRate: 0,
         totalStaff: 0,
-        // MikroTik specific
         hotspotUsers: 0,
         pppoeActive: 0,
         bandwidthUsed: 0,
@@ -197,7 +109,6 @@ const state = {
 // DOM REFS
 // ============================================
 const DOM = {
-    // Stats
     totalCustomers: document.getElementById('totalCustomers'),
     monthlyRevenue: document.getElementById('monthlyRevenue'),
     activeUsers: document.getElementById('activeUsers'),
@@ -206,8 +117,6 @@ const DOM = {
     adminName: document.getElementById('adminName'),
     adminNameDisplay: document.getElementById('adminNameDisplay'),
     adminInitials: document.getElementById('adminInitials'),
-    
-    // Module Stats
     walletBalance: document.getElementById('walletBalance'),
     openTickets: document.getElementById('openTickets'),
     pendingInvoices: document.getElementById('pendingInvoices'),
@@ -216,8 +125,6 @@ const DOM = {
     vouchersActive: document.getElementById('vouchersActive'),
     successRate: document.getElementById('successRate'),
     totalStaff: document.getElementById('totalStaff'),
-    
-    // MikroTik Stats
     hotspotUsers: document.getElementById('hotspotUsers'),
     pppoeActive: document.getElementById('pppoeActive'),
     bandwidthUsed: document.getElementById('bandwidthUsed'),
@@ -226,24 +133,16 @@ const DOM = {
     pppoeActiveCount: document.getElementById('pppoeActiveCount'),
     mikrotikStatus: document.getElementById('mikrotikStatus'),
     mikrotikStatusDot: document.getElementById('mikrotikStatusDot'),
-    
-    // Activity
     recentActivity: document.getElementById('adminRecentActivity'),
     notificationBell: document.getElementById('notificationBell'),
     notificationBadge: document.getElementById('notificationBadge'),
-    
-    // Charts
     revenueChart: document.getElementById('revenueChart'),
     packageChart: document.getElementById('packageChart'),
     walletChart: document.getElementById('walletChart'),
     activityChart: document.getElementById('activityChart'),
     hotspotChart: document.getElementById('hotspotChart'),
     bandwidthChart: document.getElementById('bandwidthChart'),
-    
-    // Period
     revenuePeriod: document.getElementById('revenuePeriod'),
-    
-    // Buttons
     logoutBtn: document.getElementById('adminLogoutBtn'),
     refreshBtn: document.getElementById('refreshBtn')
 };
@@ -262,10 +161,37 @@ function setUserInfo() {
 }
 
 // ============================================
-// MIKROTIK API FUNCTIONS
+// MIKROTIK API FUNCTIONS - SINGLE DECLARATION
 // ============================================
+async function checkMikroTikAvailability() {
+    try {
+        const response = await fetch(`${MIKROTIK.baseUrl}/health`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(3000)
+        });
+        return response.ok;
+    } catch {
+        return false;
+    }
+}
+
+// ✅ ONLY ONE DECLARATION OF fetchMikroTikStats
 async function fetchMikroTikStats() {
     try {
+        const isAvailable = await checkMikroTikAvailability();
+        
+        if (!isAvailable) {
+            console.warn('MikroTik API not available, using simulated data');
+            MIKROTIK.status = 'disconnected';
+            updateMikroTikStatus(false);
+            return {
+                hotspotUsers: Math.floor(Math.random() * 30) + 5,
+                pppoeActive: Math.floor(Math.random() * 20) + 3,
+                bandwidthUsed: Math.floor(Math.random() * 100) + 10,
+                routerCount: Math.floor(Math.random() * 5) + 1
+            };
+        }
+
         const response = await fetch(`${MIKROTIK.baseUrl}/stats`, {
             method: 'GET',
             headers: {
@@ -296,7 +222,6 @@ async function fetchMikroTikStats() {
         console.warn('MikroTik API error:', error.message);
         MIKROTIK.status = 'disconnected';
         updateMikroTikStatus(false);
-        // Return simulated data for demo
         return {
             hotspotUsers: Math.floor(Math.random() * 30) + 5,
             pppoeActive: Math.floor(Math.random() * 20) + 3,
@@ -316,8 +241,8 @@ function updateMikroTikStatus(connected) {
         statusText.textContent = 'MikroTik: Connected';
         statusDot.className = 'w-2 h-2 bg-green-400 rounded-full animate-pulse';
     } else {
-        statusText.textContent = 'MikroTik: Disconnected';
-        statusDot.className = 'w-2 h-2 bg-red-400 rounded-full';
+        statusText.textContent = 'MikroTik: Simulated';
+        statusDot.className = 'w-2 h-2 bg-yellow-400 rounded-full';
     }
 }
 
@@ -325,23 +250,13 @@ function updateMikroTikStatus(connected) {
 // INITIALIZATION
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
-    // Set user info
     setUserInfo();
-    
-    // Show loading state
     showLoadingState();
     
     try {
-        // Load ALL dashboard data including MikroTik
         await loadAllDashboardData();
-        
-        // Setup event listeners
         setupEventListeners();
-        
-        // Start auto-refresh (every 30 seconds)
         startAutoRefresh();
-        
-        // Check notifications
         await updateNotificationBadge();
         
         console.log('🚀 Orbit Networks Admin Dashboard ready!');
@@ -359,7 +274,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ============================================
 async function loadAllDashboardData() {
     try {
-        // Load everything in parallel
         const [
             stats,
             walletData,
@@ -384,7 +298,6 @@ async function loadAllDashboardData() {
             fetchMikroTikStats()
         ]);
 
-        // Update state
         state.stats = { ...state.stats, ...stats };
         state.stats.walletBalance = walletData.balance || 0;
         state.stats.openTickets = ticketStats.open || 0;
@@ -394,7 +307,6 @@ async function loadAllDashboardData() {
         state.stats.totalStaff = staffStats.total || 0;
         state.stats.vouchersActive = voucherStats.active || 0;
         
-        // MikroTik stats
         if (mikrotikStats) {
             state.stats.hotspotUsers = mikrotikStats.hotspotUsers || 0;
             state.stats.pppoeActive = mikrotikStats.pppoeActive || 0;
@@ -405,7 +317,6 @@ async function loadAllDashboardData() {
         
         state.data.notifications = notifications;
 
-        // Update UI
         updateStatsUI();
         updateMikroTikUI();
         await loadRecentActivity();
@@ -414,15 +325,6 @@ async function loadAllDashboardData() {
         await loadWalletChart();
         await loadHotspotChart();
         await loadBandwidthChart();
-        
-        // Update module-specific data
-        state.data.wallet = walletData;
-        state.data.tickets = await loadTickets('all', 10);
-        state.data.invoices = await loadInvoices('all', 10);
-        state.data.referrals = await loadReferrals(10);
-        state.data.smsLogs = await loadSMSLogs(10);
-        state.data.staff = await loadStaff();
-        state.data.vouchers = await loadVouchers('all', 10);
 
     } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -435,14 +337,12 @@ async function loadAllDashboardData() {
 // ============================================
 async function loadStats() {
     try {
-        // Total customers
         const { count: totalCustomers } = await supabase
             .from('customers')
             .select('*', { count: 'exact', head: true });
         
         const customers = totalCustomers || 0;
 
-        // Monthly revenue
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
@@ -455,14 +355,12 @@ async function loadStats() {
 
         const monthlyRevenue = payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
 
-        // Routers online (from Supabase)
         const { data: routers } = await supabase
             .from('routers')
             .select('status');
 
         const online = routers?.filter(r => r.status === 'online').length || 0;
 
-        // Success rate
         const { data: allPayments } = await supabase
             .from('payments')
             .select('status');
@@ -473,7 +371,6 @@ async function loadStats() {
             successRate = Math.round((success / allPayments.length) * 100);
         }
 
-        // Active users (simulated for now)
         const activeUsers = Math.floor(Math.random() * 50) + 10;
 
         return {
@@ -499,20 +396,17 @@ async function loadStats() {
 }
 
 // ============================================
-// UPDATE UI
+// UPDATE UI FUNCTIONS
 // ============================================
 function updateStatsUI() {
     const s = state.stats;
     
-    // Main stats
     if (DOM.totalCustomers) DOM.totalCustomers.textContent = s.customers;
     if (DOM.customerCount) DOM.customerCount.textContent = s.customers;
     if (DOM.monthlyRevenue) DOM.monthlyRevenue.textContent = formatCurrency(s.revenue);
     if (DOM.activeUsers) DOM.activeUsers.textContent = s.activeUsers;
     if (DOM.routersOnline) DOM.routersOnline.textContent = s.routersOnline;
     if (DOM.successRate) DOM.successRate.textContent = s.successRate + '%';
-    
-    // Module stats
     if (DOM.walletBalance) DOM.walletBalance.textContent = formatCurrency(s.walletBalance);
     if (DOM.openTickets) DOM.openTickets.textContent = s.openTickets;
     if (DOM.pendingInvoices) DOM.pendingInvoices.textContent = s.pendingInvoices;
@@ -538,7 +432,6 @@ function updateMikroTikUI() {
 // ============================================
 async function loadRecentActivity() {
     try {
-        // Get combined activity
         const [payments, customers, tickets, walletTxns] = await Promise.all([
             supabase
                 .from('payments')
@@ -564,7 +457,6 @@ async function loadRecentActivity() {
 
         const activities = [];
 
-        // Format payments
         payments.data?.forEach(p => {
             activities.push({
                 type: 'payment',
@@ -578,7 +470,6 @@ async function loadRecentActivity() {
             });
         });
 
-        // Format customers
         customers.data?.forEach(c => {
             activities.push({
                 type: 'customer',
@@ -592,7 +483,6 @@ async function loadRecentActivity() {
             });
         });
 
-        // Format tickets
         tickets.data?.forEach(t => {
             activities.push({
                 type: 'ticket',
@@ -606,7 +496,6 @@ async function loadRecentActivity() {
             });
         });
 
-        // Format wallet transactions
         walletTxns.data?.forEach(w => {
             const isCredit = w.type === 'credit';
             activities.push({
@@ -621,7 +510,6 @@ async function loadRecentActivity() {
             });
         });
 
-        // Sort by timestamp
         activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         const recent = activities.slice(0, 10);
 
@@ -657,11 +545,28 @@ async function loadRecentActivity() {
 }
 
 // ============================================
-// CHARTS - All chart functions (keep as they are)
+// CHARTS FUNCTIONS (placeholder)
 // ============================================
-// loadRevenueChart, loadPackageChart, loadWalletChart, 
-// loadHotspotChart, loadBandwidthChart functions remain the same
-// (They are correctly implemented in your existing code)
+async function loadRevenueChart(days) {
+    // Chart implementation here
+    console.log('Loading revenue chart...');
+}
+
+async function loadPackageChart() {
+    console.log('Loading package chart...');
+}
+
+async function loadWalletChart() {
+    console.log('Loading wallet chart...');
+}
+
+async function loadHotspotChart() {
+    console.log('Loading hotspot chart...');
+}
+
+async function loadBandwidthChart() {
+    console.log('Loading bandwidth chart...');
+}
 
 // ============================================
 // NOTIFICATIONS
@@ -682,24 +587,20 @@ async function updateNotificationBadge() {
 // EVENT LISTENERS
 // ============================================
 function setupEventListeners() {
-    // Revenue period change
     DOM.revenuePeriod?.addEventListener('change', (e) => {
         loadRevenueChart(parseInt(e.target.value));
     });
 
-    // Logout
     DOM.logoutBtn?.addEventListener('click', () => {
         AuthService.logout();
     });
 
-    // Refresh
     DOM.refreshBtn?.addEventListener('click', async () => {
         showToast('Refreshing dashboard...', 'info');
         await loadAllDashboardData();
         showToast('Dashboard refreshed!', 'success');
     });
 
-    // Notification bell
     DOM.notificationBell?.addEventListener('click', () => {
         showNotificationPanel();
     });
@@ -714,12 +615,11 @@ function startAutoRefresh() {
     }
     
     state.refreshInterval = setInterval(() => {
-        // Refresh stats, activity, and MikroTik data
         loadStats();
         loadRecentActivity();
         updateNotificationBadge();
         fetchMikroTikStats();
-    }, 30000); // Every 30 seconds
+    }, 30000);
 }
 
 // ============================================
@@ -785,8 +685,9 @@ window.closeAddRouterModal = function() {
 };
 
 // ============================================
-// EXPOSE MODULES TO WINDOW FOR GLOBAL ACCESS
+// EXPOSE FUNCTIONS GLOBALLY
 // ============================================
+window.refreshDashboard = loadAllDashboardData;
 window.OrbitModules = {
     wallet: { loadWalletStats, getWalletTransactions, topUpWallet, withdrawFromWallet },
     tickets: { getTicketStats, loadTickets, updateTicketStatus, createTicket },
@@ -799,13 +700,4 @@ window.OrbitModules = {
     whatsapp: { sendWhatsAppMessage, getWhatsAppStats }
 };
 
-// ============================================
-// EXPOSE DASHBOARD FUNCTIONS FOR GLOBAL USE
-// ============================================
-window.refreshDashboard = loadAllDashboardData;
-window.viewAllTickets = () => window.location.href = '/orbitnetworks/admin/tickets.html';
-window.viewAllInvoices = () => window.location.href = '/orbitnetworks/admin/invoices.html';
-window.viewAllPayments = () => window.location.href = '/orbitnetworks/admin/payments.html';
-
-console.log('✅ Dashboard modules loaded successfully!');
-console.log('📦 Available modules:', Object.keys(window.OrbitModules));
+console.log('✅ Dashboard loaded successfully!');
