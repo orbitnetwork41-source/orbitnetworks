@@ -2234,7 +2234,9 @@ async function loadCustomersForDropdown() {
 // FORM SUBMISSIONS
 // ============================================
 
-// ADD CUSTOMER FORM
+// ============================================
+// ADD CUSTOMER FORM - COMPLETE WORKING VERSION
+// ============================================
 document.getElementById('addCustomerForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -2244,61 +2246,74 @@ document.getElementById('addCustomerForm')?.addEventListener('submit', async (e)
     const packageId = document.getElementById('customerPackage')?.value;
     const status = document.getElementById('customerStatus')?.value;
     
+    // Validate required fields
     if (!fullName || !phone) {
         showToast('Please fill in all required fields', 'error');
         return;
     }
     
+    // Validate phone number (Kenyan format)
+    const phoneRegex = /^0[0-9]{9}$/;
+    if (!phoneRegex.test(phone)) {
+        showToast('Please enter a valid phone number (e.g., 0712345678)', 'error');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('submitCustomerBtn');
+    const originalText = submitBtn?.innerHTML || 'Add Customer';
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Creating...';
+        submitBtn.disabled = true;
+    }
+    
     try {
-        const customerId = crypto.randomUUID ? crypto.randomUUID() : generateId();
+        console.log('📝 Creating customer:', { fullName, phone, email, packageId, status });
         
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .insert([{
-                id: customerId,
-                full_name: fullName,
-                phone: phone,
-                email: email || null,
-                role: 'customer',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            }]);
+        // Call the PostgreSQL function using Supabase RPC
+        const { data, error } = await supabase
+            .rpc('create_customer', {
+                p_full_name: fullName,
+                p_phone: phone,
+                p_email: email || null,
+                p_package_id: packageId || null,
+                p_status: status || 'active'
+            });
         
-        if (profileError) {
-            throw new Error('Failed to create profile: ' + profileError.message);
+        if (error) {
+            console.error('❌ RPC Error:', error);
+            
+            // Check if it's a duplicate phone error
+            if (error.message && error.message.includes('duplicate key')) {
+                showToast('A customer with this phone number already exists', 'error');
+            } else {
+                showToast('Failed to create customer: ' + error.message, 'error');
+            }
+            return;
         }
         
-        const { data: customer, error: customerError } = await supabase
-            .from('customers')
-            .insert([{
-                id: customerId,
-                package_id: packageId || null,
-                status: status || 'active',
-                wallet_balance: 0,
-                data_used_gb: 0,
-                data_limit_gb: 0,
-                created_at: new Date().toISOString()
-            }])
-            .select()
-            .single();
-        
-        if (customerError) {
-            await supabase.from('profiles').delete().eq('id', customerId);
-            throw new Error('Failed to create customer: ' + customerError.message);
-        }
-        
+        console.log('✅ Customer created successfully:', data);
         showToast(`Customer ${fullName} created successfully!`, 'success');
+        
+        // Close modal
         window.closeAddCustomerModal();
+        
+        // Refresh data
         loadCustomers();
         loadAllDashboardData();
+        
+        // Reset form
         document.getElementById('addCustomerForm').reset();
         
     } catch (error) {
-        console.error('Error creating customer:', error);
-        showToast('Failed to create customer: ' + error.message, 'error');
+        console.error('❌ Error creating customer:', error);
+        showToast('Failed to create customer: ' + (error.message || 'Unknown error'), 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
     }
 });
-
 // ADD PACKAGE FORM
 document.getElementById('addPackageForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
