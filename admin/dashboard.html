@@ -9,13 +9,201 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" href="/orbitnetworks/css/style.css" />
     <link rel="stylesheet" href="/orbitnetworks/css/admin.css" />
+    <style>
+        /* ============================================
+           LIGHT/DARK MODE TOGGLE STYLES
+           ============================================ */
+        .theme-toggle {
+            position: relative;
+            width: 48px;
+            height: 26px;
+            background: #2d3748;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        .theme-toggle.light {
+            background: #e2e8f0;
+        }
+        .theme-toggle .toggle-dot {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+        .theme-toggle.light .toggle-dot {
+            left: 25px;
+            background: #1a202c;
+        }
+        .theme-toggle .toggle-dot i {
+            color: #f59e0b;
+        }
+        .theme-toggle.light .toggle-dot i {
+            color: #fbbf24;
+        }
+
+        /* ============================================
+           MOBILE NAVIGATION
+           ============================================ */
+        .mobile-nav-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+        }
+        .mobile-nav-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 998;
+        }
+        .mobile-nav-overlay.active {
+            display: block;
+        }
+        .admin-sidebar.mobile-open {
+            transform: translateX(0) !important;
+        }
+
+        /* Light Theme Variables */
+        [data-theme="light"] {
+            --bg-primary: #f7fafc;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #1a202c;
+            --text-secondary: #4a5568;
+            --border-color: #e2e8f0;
+        }
+        [data-theme="dark"] {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #1a1a2e;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --border-color: rgba(255,255,255,0.1);
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+        .admin-sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        .admin-stat-card, .admin-chart-card, .admin-activity-card, .admin-quick-actions-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+        }
+        .admin-stat-mini {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+        }
+        .admin-nav-link {
+            color: var(--text-secondary);
+        }
+        .admin-nav-link:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--text-primary);
+        }
+        .admin-nav-link.active {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+        }
+        #pageTitle, .admin-stat-card p.text-white, .admin-chart-card h3 {
+            color: var(--text-primary);
+        }
+        .text-gray-400 {
+            color: var(--text-secondary) !important;
+        }
+        .border-white\/10, .border-white\/5 {
+            border-color: var(--border-color) !important;
+        }
+        .bg-white\/5 {
+            background: rgba(255,255,255,0.05);
+        }
+        [data-theme="light"] .bg-white\/5 {
+            background: rgba(0,0,0,0.05);
+        }
+        [data-theme="light"] .bg-white\/10 {
+            background: rgba(0,0,0,0.1);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .mobile-nav-toggle {
+                display: block;
+            }
+            .admin-sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 280px;
+                transform: translateX(-100%);
+                z-index: 999;
+                transition: transform 0.3s ease;
+                overflow-y: auto;
+            }
+            .admin-sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            .main-content {
+                padding: 1rem;
+            }
+            .grid-cols-4, .grid-cols-6, .grid-cols-8 {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            .lg\\:grid-cols-2, .lg\\:grid-cols-3 {
+                grid-template-columns: 1fr !important;
+            }
+            .header-actions {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .admin-stats-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+        }
+        @media (max-width: 480px) {
+            .grid-cols-4, .grid-cols-6, .grid-cols-8 {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            .admin-stat-mini {
+                padding: 12px;
+            }
+            .admin-stat-mini p.text-lg {
+                font-size: 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- Mobile Overlay -->
+    <div class="mobile-nav-overlay" id="mobileOverlay" onclick="closeMobileNav()"></div>
+
     <!-- Admin Layout -->
-    <div class="flex min-h-screen bg-[#0f0f1a]">
+    <div class="flex min-h-screen">
         <!-- Sidebar -->
-        <aside class="admin-sidebar">
-            <div class="p-6 border-b border-white/5">
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="p-6 border-b border-white/5 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
                         <i class="fas fa-satellite-dish text-white"></i>
@@ -25,52 +213,57 @@
                         <p class="text-xs text-gray-400">MikroTik Admin</p>
                     </div>
                 </div>
+                <!-- Close button for mobile -->
+                <button onclick="closeMobileNav()" class="md:hidden text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
             </div>
 
-           <nav class="p-4 space-y-1">
-    <a href="#admin-dashboard" class="admin-nav-link active" data-page="dashboard">
-        <i class="fas fa-home"></i>
-        <span>Dashboard</span>
-    </a>
-    <a href="#admin-customers" class="admin-nav-link" data-page="customers">
-        <i class="fas fa-users"></i>
-        <span>Customers</span>
-        <span class="ml-auto bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded-full" id="customerCount">0</span>
-    </a>
-    <a href="#admin-packages" class="admin-nav-link" data-page="packages">
-        <i class="fas fa-box"></i>
-        <span>Packages</span>
-    </a>
-    <a href="#admin-payments" class="admin-nav-link" data-page="payments">
-        <i class="fas fa-credit-card"></i>
-        <span>Payments</span>
-    </a>
-    <a href="#admin-routers" class="admin-nav-link" data-page="routers">
-        <i class="fas fa-router"></i>
-        <span>Routers</span>
-    </a>
-    <a href="#admin-hotspot" class="admin-nav-link" data-page="hotspot">
-        <i class="fas fa-wifi"></i>
-        <span>Hotspot</span>
-        <span class="ml-auto bg-green-500/20 text-green-400 text-xs px-2 py-0.5 rounded-full">Live</span>
-    </a>
-    <a href="#admin-pppoe" class="admin-nav-link" data-page="pppoe">
-        <i class="fas fa-network-wired"></i>
-        <span>PPPoE</span>
-    </a>
-    <a href="#admin-reports" class="admin-nav-link" data-page="reports">
-        <i class="fas fa-chart-bar"></i>
-        <span>Reports</span>
-    </a>
-    <a href="#admin-settings" class="admin-nav-link" data-page="settings">
-        <i class="fas fa-cog"></i>
-        <span>Settings</span>
-    </a>
-    <a href="/orbitnetworks/" class="admin-nav-link text-gray-500 hover:text-gray-300 mt-4 border-t border-white/5 pt-4">
-        <i class="fas fa-arrow-left"></i>
-        <span>Back to Customer Portal</span>
-    </a>
-</nav>
+            <nav class="p-4 space-y-1">
+                <a href="#admin-dashboard" class="admin-nav-link active" data-page="dashboard">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#admin-customers" class="admin-nav-link" data-page="customers">
+                    <i class="fas fa-users"></i>
+                    <span>Customers</span>
+                    <span class="ml-auto bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded-full" id="customerCount">0</span>
+                </a>
+                <a href="#admin-packages" class="admin-nav-link" data-page="packages">
+                    <i class="fas fa-box"></i>
+                    <span>Packages</span>
+                </a>
+                <a href="#admin-payments" class="admin-nav-link" data-page="payments">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="#admin-routers" class="admin-nav-link" data-page="routers">
+                    <i class="fas fa-router"></i>
+                    <span>Routers</span>
+                </a>
+                <a href="#admin-hotspot" class="admin-nav-link" data-page="hotspot">
+                    <i class="fas fa-wifi"></i>
+                    <span>Hotspot</span>
+                    <span class="ml-auto bg-green-500/20 text-green-400 text-xs px-2 py-0.5 rounded-full">Live</span>
+                </a>
+                <a href="#admin-pppoe" class="admin-nav-link" data-page="pppoe">
+                    <i class="fas fa-network-wired"></i>
+                    <span>PPPoE</span>
+                </a>
+                <a href="#admin-reports" class="admin-nav-link" data-page="reports">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="#admin-settings" class="admin-nav-link" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="/orbitnetworks/" class="admin-nav-link text-gray-500 hover:text-gray-300 mt-4 border-t border-white/5 pt-4">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Customer Portal</span>
+                </a>
+            </nav>
+
             <div class="p-4 mt-auto border-t border-white/5">
                 <button id="adminLogoutBtn" class="w-full py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition flex items-center justify-center gap-2">
                     <i class="fas fa-sign-out-alt"></i>
@@ -80,21 +273,38 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 p-8">
+        <main class="flex-1 p-4 md:p-8 main-content">
             <!-- Header -->
-            <div class="flex justify-between items-center mb-8">
-                <div>
-                    <h1 class="text-3xl font-bold text-white" id="pageTitle">Dashboard</h1>
-                    <p class="text-gray-400" id="pageSubtitle">Welcome back, <span id="adminName">Admin</span>!</p>
-                </div>
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
                 <div class="flex items-center gap-4">
+                    <!-- Mobile Menu Toggle -->
+                    <button class="mobile-nav-toggle md:hidden" onclick="toggleMobileNav()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold text-white" id="pageTitle">Dashboard</h1>
+                        <p class="text-gray-400 text-sm" id="pageSubtitle">Welcome back, <span id="adminName">Admin</span>!</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 header-actions">
+                    <!-- Theme Toggle -->
+                    <div class="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg">
+                        <i class="fas fa-sun text-yellow-400 text-xs"></i>
+                        <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
+                            <div class="toggle-dot">
+                                <i class="fas fa-moon"></i>
+                            </div>
+                        </div>
+                        <i class="fas fa-moon text-blue-300 text-xs"></i>
+                    </div>
+
                     <div class="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg">
                         <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse" id="mikrotikStatusDot"></span>
                         <span class="text-xs text-gray-400" id="mikrotikStatus">MikroTik: Connected</span>
                     </div>
                     <button id="notificationBell" class="text-gray-400 hover:text-white transition relative">
                         <i class="fas fa-bell text-xl"></i>
-                        <span id="notificationBadge" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full hidden">0</span>
+                        <span id="notificationBadge" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full hidden flex items-center justify-center">0</span>
                     </button>
                     <button id="refreshBtn" class="text-gray-400 hover:text-white transition">
                         <i class="fas fa-sync-alt text-xl"></i>
@@ -103,7 +313,7 @@
                         <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                             <span class="font-bold text-sm text-white" id="adminInitials">SA</span>
                         </div>
-                        <div>
+                        <div class="hidden sm:block">
                             <p class="text-white text-sm font-medium" id="adminNameDisplay">Super Admin</p>
                             <p class="text-xs text-gray-400">Full Access</p>
                         </div>
@@ -115,39 +325,39 @@
             PAGE CONTAINERS - SPA
             ============================================================ -->
             
-            <!-- DASHBOARD PAGE -->
+            <!-- ==================== DASHBOARD PAGE ==================== -->
             <div id="page-dashboard" class="admin-page active">
                 <!-- MikroTik Stats Row -->
-                <div class="grid grid-cols-4 md:grid-cols-6 gap-4 mb-8">
-                    <div class="admin-stat-mini border-l-4 border-blue-500">
+                <div class="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-4 mb-6">
+                    <div class="admin-stat-mini border-l-4 border-blue-500 p-3 md:p-4">
                         <p class="text-xs text-gray-400">Hotspot Users</p>
                         <p class="text-lg font-bold text-white" id="hotspotUsers">0</p>
                     </div>
-                    <div class="admin-stat-mini border-l-4 border-green-500">
+                    <div class="admin-stat-mini border-l-4 border-green-500 p-3 md:p-4">
                         <p class="text-xs text-gray-400">PPPoE Active</p>
                         <p class="text-lg font-bold text-white" id="pppoeActive">0</p>
                     </div>
-                    <div class="admin-stat-mini border-l-4 border-yellow-500">
+                    <div class="admin-stat-mini border-l-4 border-yellow-500 p-3 md:p-4">
                         <p class="text-xs text-gray-400">Routers Online</p>
                         <p class="text-lg font-bold text-white" id="routerCount">0</p>
                     </div>
-                    <div class="admin-stat-mini border-l-4 border-purple-500">
+                    <div class="admin-stat-mini border-l-4 border-purple-500 p-3 md:p-4">
                         <p class="text-xs text-gray-400">Bandwidth Used</p>
                         <p class="text-lg font-bold text-white" id="bandwidthUsed">0 Mbps</p>
                     </div>
-                    <div class="admin-stat-mini border-l-4 border-emerald-500">
+                    <div class="admin-stat-mini border-l-4 border-emerald-500 p-3 md:p-4">
                         <p class="text-xs text-gray-400">Wallet</p>
                         <p class="text-lg font-bold text-emerald-400" id="walletBalance">KES 0</p>
                     </div>
-                    <div class="admin-stat-mini border-l-4 border-orange-500">
+                    <div class="admin-stat-mini border-l-4 border-orange-500 p-3 md:p-4">
                         <p class="text-xs text-gray-400">Success Rate</p>
                         <p class="text-lg font-bold text-orange-400" id="successRate">0%</p>
                     </div>
                 </div>
 
                 <!-- Stats Grid -->
-                <div class="grid md:grid-cols-4 gap-6 mb-8">
-                    <div class="admin-stat-card">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6">
+                    <div class="admin-stat-card p-4 md:p-6 rounded-xl">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm text-gray-400">Total Customers</p>
@@ -160,7 +370,7 @@
                         </div>
                     </div>
 
-                    <div class="admin-stat-card">
+                    <div class="admin-stat-card p-4 md:p-6 rounded-xl">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm text-gray-400">Revenue (Month)</p>
@@ -173,7 +383,7 @@
                         </div>
                     </div>
 
-                    <div class="admin-stat-card">
+                    <div class="admin-stat-card p-4 md:p-6 rounded-xl">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm text-gray-400">Active Users</p>
@@ -186,7 +396,7 @@
                         </div>
                     </div>
 
-                    <div class="admin-stat-card">
+                    <div class="admin-stat-card p-4 md:p-6 rounded-xl">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm text-gray-400">Routers Online</p>
@@ -201,46 +411,46 @@
                 </div>
 
                 <!-- Module Stats Row -->
-                <div class="grid grid-cols-4 md:grid-cols-8 gap-4 mb-8">
-                    <div class="admin-stat-mini">
+                <div class="grid grid-cols-4 md:grid-cols-8 gap-3 md:gap-4 mb-6">
+                    <div class="admin-stat-mini p-2 md:p-3">
                         <p class="text-xs text-gray-400">Tickets</p>
                         <p class="text-lg font-bold text-yellow-400" id="openTickets">0</p>
                     </div>
-                    <div class="admin-stat-mini">
+                    <div class="admin-stat-mini p-2 md:p-3">
                         <p class="text-xs text-gray-400">Invoices</p>
                         <p class="text-lg font-bold text-orange-400" id="pendingInvoices">0</p>
                     </div>
-                    <div class="admin-stat-mini">
+                    <div class="admin-stat-mini p-2 md:p-3">
                         <p class="text-xs text-gray-400">SMS Sent</p>
                         <p class="text-lg font-bold text-blue-400" id="smsSent">0</p>
                     </div>
-                    <div class="admin-stat-mini">
+                    <div class="admin-stat-mini p-2 md:p-3">
                         <p class="text-xs text-gray-400">Referrals</p>
                         <p class="text-lg font-bold text-pink-400" id="referrals">0</p>
                     </div>
-                    <div class="admin-stat-mini">
+                    <div class="admin-stat-mini p-2 md:p-3">
                         <p class="text-xs text-gray-400">Vouchers</p>
                         <p class="text-lg font-bold text-purple-400" id="vouchersActive">0</p>
                     </div>
-                    <div class="admin-stat-mini">
+                    <div class="admin-stat-mini p-2 md:p-3">
                         <p class="text-xs text-gray-400">Staff</p>
                         <p class="text-lg font-bold text-cyan-400" id="totalStaff">0</p>
                     </div>
-                    <div class="admin-stat-mini">
+                    <div class="admin-stat-mini p-2 md:p-3">
                         <p class="text-xs text-gray-400">Hotspot Sessions</p>
                         <p class="text-lg font-bold text-emerald-400" id="hotspotSessions">0</p>
                     </div>
-                    <div class="admin-stat-mini">
+                    <div class="admin-stat-mini p-2 md:p-3">
                         <p class="text-xs text-gray-400">PPPoE Active</p>
                         <p class="text-lg font-bold text-blue-400" id="pppoeActiveCount">0</p>
                     </div>
                 </div>
 
                 <!-- Charts -->
-                <div class="grid lg:grid-cols-2 gap-8 mb-8">
-                    <div class="admin-chart-card">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold text-white">Revenue Overview</h3>
+                <div class="grid lg:grid-cols-2 gap-6 mb-6">
+                    <div class="admin-chart-card p-4 md:p-6 rounded-xl">
+                        <div class="flex flex-wrap justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold">Revenue Overview</h3>
                             <select id="revenuePeriod" class="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-white text-sm">
                                 <option value="7">Last 7 Days</option>
                                 <option value="30" selected>Last 30 Days</option>
@@ -250,27 +460,27 @@
                         <canvas id="revenueChart" height="250"></canvas>
                     </div>
 
-                    <div class="admin-chart-card">
+                    <div class="admin-chart-card p-4 md:p-6 rounded-xl">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold text-white">Package Distribution</h3>
+                            <h3 class="text-lg font-bold">Package Distribution</h3>
                         </div>
                         <canvas id="packageChart" height="250"></canvas>
                     </div>
                 </div>
 
                 <!-- MikroTik Hotspot Live Stats -->
-                <div class="grid lg:grid-cols-2 gap-8 mb-8">
-                    <div class="admin-chart-card">
+                <div class="grid lg:grid-cols-2 gap-6 mb-6">
+                    <div class="admin-chart-card p-4 md:p-6 rounded-xl">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold text-white">Hotspot Active Users</h3>
+                            <h3 class="text-lg font-bold">Hotspot Active Users</h3>
                             <span class="text-xs text-green-400 animate-pulse">● Live</span>
                         </div>
                         <canvas id="hotspotChart" height="250"></canvas>
                     </div>
 
-                    <div class="admin-chart-card">
+                    <div class="admin-chart-card p-4 md:p-6 rounded-xl">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold text-white">Bandwidth Usage</h3>
+                            <h3 class="text-lg font-bold">Bandwidth Usage</h3>
                             <span class="text-xs text-cyan-400">Real-time</span>
                         </div>
                         <canvas id="bandwidthChart" height="250"></canvas>
@@ -278,17 +488,17 @@
                 </div>
 
                 <!-- Recent Activity & Quick Actions -->
-                <div class="grid lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-2 admin-activity-card">
+                <div class="grid lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 admin-activity-card p-4 md:p-6 rounded-xl">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold text-white">Recent Activity</h3>
+                            <h3 class="text-lg font-bold">Recent Activity</h3>
                             <a href="#" class="text-sm text-blue-400 hover:text-blue-300">View All</a>
                         </div>
                         <div id="adminRecentActivity" class="space-y-3"></div>
                     </div>
 
-                    <div class="admin-quick-actions-card">
-                        <h3 class="text-lg font-bold text-white mb-4">Quick Actions</h3>
+                    <div class="admin-quick-actions-card p-4 md:p-6 rounded-xl">
+                        <h3 class="text-lg font-bold mb-4">Quick Actions</h3>
                         <div class="space-y-3">
                             <button onclick="showAddCustomerModal()" class="w-full py-3 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition flex items-center gap-3">
                                 <i class="fas fa-user-plus"></i>
@@ -319,91 +529,427 @@
                 </div>
             </div>
 
-            <!-- OTHER PAGES (empty containers) -->
+            <!-- ==================== CUSTOMERS PAGE ==================== -->
             <div id="page-customers" class="admin-page hidden">
-                <div class="page-header">
-                    <h1 class="text-3xl font-bold text-white">Customers</h1>
-                    <p class="text-gray-400">Manage your customers</p>
+                <div class="page-header flex flex-wrap justify-between items-center mb-6">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white">Customers</h1>
+                        <p class="text-gray-400">Manage your customers</p>
+                    </div>
+                    <button onclick="showAddCustomerModal()" class="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition flex items-center gap-2">
+                        <i class="fas fa-user-plus"></i> Add Customer
+                    </button>
                 </div>
-                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
-                    <p class="text-gray-400">Customer management coming soon...</p>
+                
+                <!-- Customer Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Total</p>
+                        <p class="text-2xl font-bold text-white" id="customerTotal">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Active</p>
+                        <p class="text-2xl font-bold text-emerald-400" id="customerActive">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Inactive</p>
+                        <p class="text-2xl font-bold text-gray-400" id="customerInactive">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Suspended</p>
+                        <p class="text-2xl font-bold text-red-400" id="customerSuspended">0</p>
+                    </div>
+                </div>
+
+                <!-- Customer Search & Filter -->
+                <div class="flex flex-wrap gap-3 mb-4">
+                    <input type="text" id="customerSearch" placeholder="Search customers..." class="flex-1 min-w-[200px] px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="customerFilter" class="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                    <button onclick="loadCustomers()" class="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+
+                <!-- Customers Table -->
+                <div class="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-white/5 border-b border-white/10">
+                                <tr>
+                                    <th class="text-left text-xs text-gray-400 font-medium px-4 py-3">Customer</th>
+                                    <th class="text-left text-xs text-gray-400 font-medium px-4 py-3">Phone</th>
+                                    <th class="text-left text-xs text-gray-400 font-medium px-4 py-3">Package</th>
+                                    <th class="text-left text-xs text-gray-400 font-medium px-4 py-3">Status</th>
+                                    <th class="text-left text-xs text-gray-400 font-medium px-4 py-3">Data Used</th>
+                                    <th class="text-left text-xs text-gray-400 font-medium px-4 py-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customersTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center text-gray-400 py-8">Loading customers...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             
+            <!-- ==================== PACKAGES PAGE ==================== -->
             <div id="page-packages" class="admin-page hidden">
-                <div class="page-header">
-                    <h1 class="text-3xl font-bold text-white">Packages</h1>
-                    <p class="text-gray-400">Manage service packages</p>
+                <div class="page-header flex flex-wrap justify-between items-center mb-6">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white">Packages</h1>
+                        <p class="text-gray-400">Manage service packages</p>
+                    </div>
+                    <button onclick="showAddPackageModal()" class="px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition flex items-center gap-2">
+                        <i class="fas fa-plus-circle"></i> Create Package
+                    </button>
                 </div>
-                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
-                    <p class="text-gray-400">Package management coming soon...</p>
+
+                <!-- Package Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Total</p>
+                        <p class="text-2xl font-bold text-white" id="packageTotal">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Active</p>
+                        <p class="text-2xl font-bold text-emerald-400" id="packageActive">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Inactive</p>
+                        <p class="text-2xl font-bold text-gray-400" id="packageInactive">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Total Revenue</p>
+                        <p class="text-2xl font-bold text-green-400" id="packageRevenue">KES 0</p>
+                    </div>
+                </div>
+
+                <!-- Packages Grid -->
+                <div id="packagesGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="text-center text-gray-400 py-8 col-span-full">Loading packages...</div>
                 </div>
             </div>
             
+            <!-- ==================== PAYMENTS PAGE ==================== -->
             <div id="page-payments" class="admin-page hidden">
-                <div class="page-header">
-                    <h1 class="text-3xl font-bold text-white">Payments</h1>
-                    <p class="text-gray-400">Manage payments and transactions</p>
+                <div class="page-header flex flex-wrap justify-between items-center mb-6">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white">Payments</h1>
+                        <p class="text-gray-400">Manage payments and transactions</p>
+                    </div>
+                    <button onclick="showRecordPaymentModal()" class="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Record Payment
+                    </button>
                 </div>
-                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
-                    <p class="text-gray-400">Payment management coming soon...</p>
+
+                <!-- Payment Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Total Revenue</p>
+                        <p class="text-2xl font-bold text-green-400" id="paymentTotalRevenue">KES 0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Completed</p>
+                        <p class="text-2xl font-bold text-emerald-400" id="paymentCompleted">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Pending</p>
+                        <p class="text-2xl font-bold text-yellow-400" id="paymentPending">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Failed</p>
+                        <p class="text-2xl font-bold text-red-400" id="paymentFailed">0</p>
+                    </div>
+                </div>
+
+                <!-- Payment Filters -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button class="payment-filter px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg text-sm" data-filter="all" onclick="filterPayments('all')">All</button>
+                    <button class="payment-filter px-4 py-2 bg-white/5 text-gray-400 rounded-lg text-sm hover:bg-white/10" data-filter="completed" onclick="filterPayments('completed')">Completed</button>
+                    <button class="payment-filter px-4 py-2 bg-white/5 text-gray-400 rounded-lg text-sm hover:bg-white/10" data-filter="pending" onclick="filterPayments('pending')">Pending</button>
+                    <button class="payment-filter px-4 py-2 bg-white/5 text-gray-400 rounded-lg text-sm hover:bg-white/10" data-filter="failed" onclick="filterPayments('failed')">Failed</button>
+                    <button class="payment-filter px-4 py-2 bg-white/5 text-gray-400 rounded-lg text-sm hover:bg-white/10" data-filter="refunded" onclick="filterPayments('refunded')">Refunded</button>
+                </div>
+
+                <!-- Payments Table -->
+                <div class="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-white/5 border-b border-white/10">
+                                <tr>
+                                    <th class="text-left text-xs text-gray-400 font-medium px-4 py-3">Transaction</th>
+                                    <th class="text-left text-xs text-gray-400 font-medium px-4 py-3">Customer</th>
+                                    <th class="text-left text-xs text-gray-400 font-medium px-4 py-3">Amount</th>
+                                    <th class="text-left text-xs text-gray-400 font-medium px-4 py-3">Method</th>
+                                    <th class="text-left text-xs text-gray-400 font-medium px-4 py-3">Status</th>
+                                    <th class="text-left text-xs text-gray-400 font-medium px-4 py-3">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentsTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center text-gray-400 py-8">Loading payments...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             
+            <!-- ==================== ROUTERS PAGE ==================== -->
             <div id="page-routers" class="admin-page hidden">
-                <div class="page-header">
-                    <h1 class="text-3xl font-bold text-white">Routers</h1>
-                    <p class="text-gray-400">Manage MikroTik routers</p>
+                <div class="page-header flex flex-wrap justify-between items-center mb-6">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white">Routers</h1>
+                        <p class="text-gray-400">Manage MikroTik routers</p>
+                    </div>
+                    <button onclick="showAddRouterModal()" class="px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition flex items-center gap-2">
+                        <i class="fas fa-plus-circle"></i> Add Router
+                    </button>
                 </div>
-                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
-                    <p class="text-gray-400">Router management coming soon...</p>
+
+                <!-- Router Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Total</p>
+                        <p class="text-2xl font-bold text-white" id="routerTotal">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Online</p>
+                        <p class="text-2xl font-bold text-emerald-400" id="routerOnline">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Offline</p>
+                        <p class="text-2xl font-bold text-red-400" id="routerOffline">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Uptime</p>
+                        <p class="text-2xl font-bold text-blue-400" id="routerUptime">0%</p>
+                    </div>
+                </div>
+
+                <!-- Routers Grid -->
+                <div id="routersGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="text-center text-gray-400 py-8 col-span-full">Loading routers...</div>
                 </div>
             </div>
             
+            <!-- ==================== HOTSPOT PAGE ==================== -->
             <div id="page-hotspot" class="admin-page hidden">
-                <div class="page-header">
+                <div class="page-header mb-6">
                     <h1 class="text-3xl font-bold text-white">Hotspot Manager</h1>
                     <p class="text-gray-400">Manage hotspot users and sessions</p>
                 </div>
-                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
-                    <p class="text-gray-400">Hotspot management coming soon...</p>
+
+                <!-- Hotspot Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Active Users</p>
+                        <p class="text-2xl font-bold text-emerald-400" id="hotspotActiveUsers">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Total Sessions</p>
+                        <p class="text-2xl font-bold text-white" id="hotspotTotalSessions">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Data Used</p>
+                        <p class="text-2xl font-bold text-blue-400" id="hotspotDataUsed">0 GB</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Active Vouchers</p>
+                        <p class="text-2xl font-bold text-purple-400" id="hotspotVouchers">0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white/5 border border-white/10 rounded-lg p-6 text-center">
+                    <i class="fas fa-wifi text-4xl text-blue-400 mb-4"></i>
+                    <p class="text-gray-400">Hotspot management interface coming soon...</p>
+                    <p class="text-xs text-gray-500 mt-2">Check the <a href="/orbitnetworks/admin/hotspot.html" class="text-blue-400 hover:underline">Hotspot Manager</a> page</p>
                 </div>
             </div>
             
+            <!-- ==================== PPPOE PAGE ==================== -->
             <div id="page-pppoe" class="admin-page hidden">
-                <div class="page-header">
+                <div class="page-header mb-6">
                     <h1 class="text-3xl font-bold text-white">PPPoE Manager</h1>
                     <p class="text-gray-400">Manage PPPoE users and connections</p>
                 </div>
-                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
-                    <p class="text-gray-400">PPPoE management coming soon...</p>
+
+                <!-- PPPoE Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Active Users</p>
+                        <p class="text-2xl font-bold text-emerald-400" id="pppoeActiveUsers">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Total Users</p>
+                        <p class="text-2xl font-bold text-white" id="pppoeTotalUsers">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Data Used</p>
+                        <p class="text-2xl font-bold text-blue-400" id="pppoeDataUsed">0 GB</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Online</p>
+                        <p class="text-2xl font-bold text-cyan-400" id="pppoeOnline">0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white/5 border border-white/10 rounded-lg p-6 text-center">
+                    <i class="fas fa-network-wired text-4xl text-blue-400 mb-4"></i>
+                    <p class="text-gray-400">PPPoE management interface coming soon...</p>
+                    <p class="text-xs text-gray-500 mt-2">Check the <a href="/orbitnetworks/admin/pppoe.html" class="text-blue-400 hover:underline">PPPoE Manager</a> page</p>
                 </div>
             </div>
             
+            <!-- ==================== REPORTS PAGE ==================== -->
             <div id="page-reports" class="admin-page hidden">
-                <div class="page-header">
+                <div class="page-header mb-6">
                     <h1 class="text-3xl font-bold text-white">Reports</h1>
                     <p class="text-gray-400">View analytics and reports</p>
                 </div>
-                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
-                    <p class="text-gray-400">Reports coming soon...</p>
+
+                <!-- Report Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Revenue</p>
+                        <p class="text-2xl font-bold text-green-400" id="reportRevenue">KES 0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Customers</p>
+                        <p class="text-2xl font-bold text-white" id="reportCustomers">0</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Growth</p>
+                        <p class="text-2xl font-bold text-emerald-400" id="reportGrowth">+0%</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p class="text-xs text-gray-400">Churn Rate</p>
+                        <p class="text-2xl font-bold text-red-400" id="reportChurn">0%</p>
+                    </div>
+                </div>
+
+                <div class="bg-white/5 border border-white/10 rounded-lg p-6 text-center">
+                    <i class="fas fa-chart-bar text-4xl text-blue-400 mb-4"></i>
+                    <p class="text-gray-400">Detailed reports and analytics coming soon...</p>
                 </div>
             </div>
             
+            <!-- ==================== SETTINGS PAGE ==================== -->
             <div id="page-settings" class="admin-page hidden">
-                <div class="page-header">
+                <div class="page-header mb-6">
                     <h1 class="text-3xl font-bold text-white">Settings</h1>
                     <p class="text-gray-400">Configure system settings</p>
                 </div>
-                <div class="bg-white/5 border border-white/10 rounded-lg p-6">
-                    <p class="text-gray-400">Settings coming soon...</p>
+
+                <!-- Settings Sections -->
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- General Settings -->
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-6">
+                        <h3 class="text-lg font-bold text-white mb-4">General Settings</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">System Name</label>
+                                <input type="text" value="Orbit Networks" class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Timezone</label>
+                                <select class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white">
+                                    <option>Africa/Nairobi (UTC+3)</option>
+                                    <option>Africa/Lagos (UTC+1)</option>
+                                    <option>Africa/Johannesburg (UTC+2)</option>
+                                </select>
+                            </div>
+                            <button class="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition">Save Settings</button>
+                        </div>
+                    </div>
+
+                    <!-- Theme Settings -->
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-6">
+                        <h3 class="text-lg font-bold text-white mb-4">Theme Settings</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-400">Dark Mode</span>
+                                <button onclick="toggleTheme()" class="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition">
+                                    Toggle Theme
+                                </button>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Accent Color</label>
+                                <div class="flex gap-2">
+                                    <button class="w-8 h-8 rounded-full bg-blue-500 border-2 border-white/20 hover:border-white"></button>
+                                    <button class="w-8 h-8 rounded-full bg-purple-500 border-2 border-white/20 hover:border-white"></button>
+                                    <button class="w-8 h-8 rounded-full bg-green-500 border-2 border-white/20 hover:border-white"></button>
+                                    <button class="w-8 h-8 rounded-full bg-red-500 border-2 border-white/20 hover:border-white"></button>
+                                    <button class="w-8 h-8 rounded-full bg-orange-500 border-2 border-white/20 hover:border-white"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notification Settings -->
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-6">
+                        <h3 class="text-lg font-bold text-white mb-4">Notification Settings</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-400">Email Notifications</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-600 peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-400">SMS Notifications</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-600 peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-400">WhatsApp Notifications</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-600 peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Status -->
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-6">
+                        <h3 class="text-lg font-bold text-white mb-4">System Status</h3>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Database</span>
+                                <span class="text-emerald-400">● Connected</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">MikroTik API</span>
+                                <span class="text-yellow-400" id="settingsMikrotikStatus">● Simulated</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">SMS Service</span>
+                                <span class="text-yellow-400">● Configured</span>
+                            </div>
+                            <div class="flex justify-between pt-2 border-t border-white/10">
+                                <span class="text-gray-400">Version</span>
+                                <span class="text-white">v2.0.0</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
 
     <!-- ============================================================
-    MODALS (unchanged - keep your existing modals)
+    MODALS
     ============================================================ -->
     <!-- Add Customer Modal -->
     <div id="addCustomerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -444,7 +990,7 @@
                         <option value="suspended">Suspended</option>
                     </select>
                 </div>
-                <button type="submit" id="submitCustomerBtn" class="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300">
+                <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300">
                     <i class="fas fa-user-plus mr-2"></i> Add Customer
                 </button>
             </form>
@@ -484,7 +1030,7 @@
                     <label class="block text-sm font-medium text-gray-300 mb-1">Validity (Days) <span class="text-red-400">*</span></label>
                     <input type="number" id="packageValidity" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="30" />
                 </div>
-                <button type="submit" id="submitPackageBtn" class="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300">
+                <button type="submit" class="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300">
                     <i class="fas fa-plus-circle mr-2"></i> Create Package
                 </button>
             </form>
@@ -526,7 +1072,7 @@
                     <label class="block text-sm font-medium text-gray-300 mb-1">Reference</label>
                     <input type="text" id="paymentReference" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="MPESA123456" />
                 </div>
-                <button type="submit" id="submitPaymentBtn" class="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-green-500/30 transition-all duration-300">
+                <button type="submit" class="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-green-500/30 transition-all duration-300">
                     <i class="fas fa-hand-holding-usd mr-2"></i> Record Payment
                 </button>
             </form>
@@ -566,12 +1112,91 @@
                     <label class="block text-sm font-medium text-gray-300 mb-1">Location</label>
                     <input type="text" id="routerLocation" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="Nairobi" />
                 </div>
-                <button type="submit" id="submitRouterBtn" class="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300">
+                <button type="submit" class="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300">
                     <i class="fas fa-plus-circle mr-2"></i> Add Router
                 </button>
             </form>
         </div>
     </div>
+
+    <!-- ============================================================
+    SCRIPTS
+    ============================================================ -->
+    <script>
+        // ============================================
+        // THEME TOGGLE
+        // ============================================
+        function toggleTheme() {
+            const html = document.documentElement;
+            const toggle = document.getElementById('themeToggle');
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', newTheme);
+            
+            // Update toggle appearance
+            if (newTheme === 'light') {
+                toggle.classList.add('light');
+                toggle.querySelector('.toggle-dot i').className = 'fas fa-sun';
+            } else {
+                toggle.classList.remove('light');
+                toggle.querySelector('.toggle-dot i').className = 'fas fa-moon';
+            }
+            
+            // Save preference
+            localStorage.setItem('orbit-theme', newTheme);
+        }
+
+        // Load saved theme
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('orbit-theme') || 'dark';
+            const html = document.documentElement;
+            const toggle = document.getElementById('themeToggle');
+            
+            html.setAttribute('data-theme', savedTheme);
+            
+            if (savedTheme === 'light') {
+                toggle.classList.add('light');
+                toggle.querySelector('.toggle-dot i').className = 'fas fa-sun';
+            } else {
+                toggle.classList.remove('light');
+                toggle.querySelector('.toggle-dot i').className = 'fas fa-moon';
+            }
+        }
+
+        // ============================================
+        // MOBILE NAVIGATION
+        // ============================================
+        function toggleMobileNav() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            sidebar.classList.toggle('mobile-open');
+            overlay.classList.toggle('active');
+            document.body.style.overflow = sidebar.classList.contains('mobile-open') ? 'hidden' : '';
+        }
+
+        function closeMobileNav() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // ============================================
+        // INITIALIZE ON LOAD
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTheme();
+            
+            // Close mobile nav on window resize to desktop
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    closeMobileNav();
+                }
+            });
+        });
+    </script>
 
     <script type="importmap">
     {
