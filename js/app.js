@@ -925,14 +925,14 @@ loginForm.addEventListener('submit', async (e) => {
 logoutBtn.addEventListener('click', logout);
 
 // ============================================
-// INIT - WRAPPED IN FUNCTION TO AVOID ILLEGAL RETURN
+// INIT - WRAPPED IN IIFE TO ALLOW RETURN
 // ============================================
-function initializeApp() {
+(function initializeApp() {
     if (isAuthenticated()) {
         // Check if user is admin - redirect to admin dashboard
         if (AuthService.isAdmin()) {
             window.location.href = '/orbitnetworks/admin/dashboard.html';
-            return;
+            return; // ✅ Legal: inside a function
         }
         
         // Show the app
@@ -949,10 +949,7 @@ function initializeApp() {
         // Show login page
         showApp(false);
     }
-}
-
-// Run initialization
-initializeApp();
+})();
 
 // Handle browser back/forward
 window.addEventListener('popstate', () => {
