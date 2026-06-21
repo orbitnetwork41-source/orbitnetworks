@@ -951,52 +951,61 @@
     <!-- ============================================================
     MODALS
     ============================================================ -->
-    <!-- Add Customer Modal -->
-    <div id="addCustomerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
-        <div class="bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h2 class="text-xl font-bold text-white">Add New Customer</h2>
-                    <p class="text-sm text-gray-400">Create a new customer account</p>
-                </div>
-                <button onclick="closeAddCustomerModal()" class="text-gray-400 hover:text-white transition">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
+   <!-- Add Customer Modal -->
+<div id="addCustomerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-xl font-bold text-white">Add New Customer</h2>
+                <p class="text-sm text-gray-400">Create a new customer account</p>
             </div>
-            <form id="addCustomerForm" class="space-y-4">
-                <div class="form-group">
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Full Name <span class="text-red-400">*</span></label>
-                    <input type="text" id="customerFullName" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="John Doe" />
-                </div>
-                <div class="form-group">
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Phone Number <span class="text-red-400">*</span></label>
-                    <input type="tel" id="customerPhone" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="0712345678" />
-                </div>
-                <div class="form-group">
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                    <input type="email" id="customerEmail" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="john@example.com" />
-                </div>
-                <div class="form-group">
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Package</label>
-                    <select id="customerPackage" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                        <option value="">No Package</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Status</label>
-                    <select id="customerStatus" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                        <option value="suspended">Suspended</option>
-                    </select>
-                </div>
-                <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300">
-                    <i class="fas fa-user-plus mr-2"></i> Add Customer
-                </button>
-            </form>
+            <button onclick="closeAddCustomerModal()" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
         </div>
+        <form id="addCustomerForm" class="space-y-4">
+            <div class="form-group">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Full Name <span class="text-red-400">*</span></label>
+                <input type="text" id="customerFullName" required 
+                    class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" 
+                    placeholder="John Doe" />
+            </div>
+            <div class="form-group">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Phone Number <span class="text-red-400">*</span></label>
+                <input type="tel" id="customerPhone" required 
+                    class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" 
+                    placeholder="0712345678" />
+                <p class="text-xs text-gray-500 mt-1">Format: 0712345678 (10 digits)</p>
+            </div>
+            <div class="form-group">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                <input type="email" id="customerEmail" 
+                    class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" 
+                    placeholder="john@example.com" />
+            </div>
+            <div class="form-group">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Package</label>
+                <select id="customerPackage" 
+                    class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                    <option value="">No Package</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Status</label>
+                <select id="customerStatus" 
+                    class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                    <option value="active">Active</option>
+                    <option value="suspended">Suspended</option>
+                    <option value="expired">Expired</option>
+                </select>
+            </div>
+            <button type="submit" id="submitCustomerBtn" 
+                class="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300">
+                <i class="fas fa-user-plus mr-2"></i> Add Customer
+            </button>
+        </form>
     </div>
-
+</div>
     <!-- Add Package Modal -->
     <div id="addPackageModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
         <div class="bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto">
