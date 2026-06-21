@@ -39,7 +39,15 @@ const elements = {
     currentSpeed: document.getElementById('currentSpeed'),
     recentActivity: document.getElementById('recentActivity'),
     progressBar: document.getElementById('progressBar'),
-    walletBadge: document.getElementById('walletBadge')
+    walletBadge: document.getElementById('walletBadge'),
+    // Packages page
+    currentPackageCard: document.getElementById('currentPackageCard'),
+    currentSpeedCard: document.getElementById('currentSpeedCard'),
+    dataLimitCard: document.getElementById('dataLimitCard'),
+    expiryDateCard: document.getElementById('expiryDateCard'),
+    packagePriceCard: document.getElementById('packagePriceCard'),
+    packageStatusBadge: document.getElementById('packageStatusBadge'),
+    availablePackages: document.getElementById('availablePackages')
 };
 
 // ============================================
@@ -118,6 +126,10 @@ async function loadCustomerData() {
         // Update wallet badge
         updateWalletBadge(customer);
 
+        // Update packages page
+        updatePackagesPage(customer);
+        await loadAvailablePackages();
+
     } catch (error) {
         console.error('❌ Error:', error);
         showToast('Error loading customer data', 'error');
@@ -170,6 +182,147 @@ function updateUI(customer) {
     // Speed
     if (elements.currentSpeed) elements.currentSpeed.textContent = pkg.speed || 'N/A';
 }
+
+// ============================================
+// UPDATE PACKAGES PAGE
+// ============================================
+function updatePackagesPage(customer) {
+    if (!customer) return;
+    const pkg = customer.packages || {};
+    
+    if (elements.currentPackageCard) {
+        elements.currentPackageCard.textContent = pkg.name || 'No Package';
+    }
+    if (elements.currentSpeedCard) {
+        elements.currentSpeedCard.textContent = pkg.speed || 'N/A';
+    }
+    if (elements.dataLimitCard) {
+        elements.dataLimitCard.textContent = pkg.data_limit_gb || '0 GB';
+    }
+    if (elements.expiryDateCard) {
+        elements.expiryDateCard.textContent = customer.expires_at 
+            ? formatDate(customer.expires_at) 
+            : 'Never';
+    }
+    if (elements.packagePriceCard) {
+        elements.packagePriceCard.textContent = pkg.price ? formatCurrency(pkg.price) : '-';
+    }
+    
+    // Status badge
+    const status = customer.status || 'active';
+    const statusColors = {
+        'active': 'bg-green-500/20 text-green-400',
+        'suspended': 'bg-red-500/20 text-red-400',
+        'expired': 'bg-yellow-500/20 text-yellow-400'
+    };
+    if (elements.packageStatusBadge) {
+        elements.packageStatusBadge.className = `px-4 py-2 rounded-full text-sm font-medium ${statusColors[status] || 'bg-gray-500/20 text-gray-400'}`;
+        elements.packageStatusBadge.innerHTML = `<i class="fas fa-${status === 'active' ? 'check-circle' : 'exclamation-circle'} mr-1"></i> ${status.toUpperCase()}`;
+    }
+}
+
+// ============================================
+// LOAD AVAILABLE PACKAGES
+// ============================================
+async function loadAvailablePackages() {
+    try {
+        const { data: packages, error } = await supabase
+            .from('packages')
+            .select('*')
+            .eq('is_active', true)
+            .order('price', { ascending: true });
+
+        if (error) {
+            console.error('❌ Error loading packages:', error);
+            return;
+        }
+
+        const container = document.getElementById('availablePackages');
+        if (!container) return;
+
+        if (!packages || packages.length === 0) {
+            container.innerHTML = `
+                <div class="col-span-full text-center text-gray-400 py-8">
+                    <i class="fas fa-box text-4xl mb-4"></i>
+                    <p>No packages available</p>
+                </div>
+            `;
+            return;
+        }
+
+        const currentPackageId = customerData?.package_id;
+
+        container.innerHTML = packages.map(pkg => {
+            const isCurrent = pkg.id === currentPackageId;
+            return `
+                <div class="bg-[#1a1a2e] rounded-2xl p-6 border ${isCurrent ? 'border-blue-500/50' : 'border-white/5'} hover:border-blue-500/30 transition-all">
+                    ${isCurrent ? '<div class="text-xs text-blue-400 font-medium mb-2"><i class="fas fa-check-circle mr-1"></i> Current Plan</div>' : ''}
+                    <h3 class="text-xl font-bold text-white">${pkg.name}</h3>
+                    <p class="text-2xl font-bold text-green-400 mt-2">${formatCurrency(pkg.price)}</p>
+                    <p class="text-sm text-gray-400">${pkg.speed || 'N/A'}</p>
+                    <div class="mt-4 space-y-2 text-sm text-gray-400">
+                        <p><i class="fas fa-database w-5 text-blue-400"></i> ${pkg.data_limit_gb || 'Unlimited'} GB</p>
+                        <p><i class="fas fa-calendar-day w-5 text-green-400"></i> ${pkg.validity_days} days</p>
+                        ${pkg.features ? `<p><i class="fas fa-star w-5 text-yellow-400"></i> ${Object.keys(pkg.features).join(', ')}</p>` : ''}
+                    </div>
+                    ${!isCurrent ? `
+                        <button onclick="upgradePackage('${pkg.id}')" class="mt-4 w-full py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition">
+                            <i class="fas fa-arrow-up mr-2"></i> Upgrade
+                        </button>
+                    ` : `
+                        <div class="mt-4 text-center text-sm text-green-400">
+                            <i class="fas fa-check-circle mr-1"></i> Active Plan
+                        </div>
+                    `}
+                </div>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('Error loading packages:', error);
+    }
+}
+
+// ============================================
+// UPGRADE PACKAGE
+// ============================================
+window.upgradePackage = async function(packageId) {
+    if (!confirm('Are you sure you want to upgrade to this package?')) return;
+    
+    try {
+        // Get package details
+        const { data: pkg, error: pkgError } = await supabase
+            .from('packages')
+            .select('*')
+            .eq('id', packageId)
+            .single();
+        
+        if (pkgError) throw pkgError;
+        
+        // Update customer
+        const { error } = await supabase
+            .from('customers')
+            .update({
+                package_id: packageId,
+                data_limit_gb: pkg.data_limit_gb,
+                expires_at: new Date(Date.now() + pkg.validity_days * 86400000).toISOString(),
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', currentUser.id);
+        
+        if (error) throw error;
+        
+        showToast(`Upgraded to ${pkg.name} package!`, 'success');
+        
+        // Reload data
+        await loadCustomerData();
+        await loadAvailablePackages();
+        
+    } catch (error) {
+        console.error('Error upgrading package:', error);
+        showToast('Error upgrading package: ' + error.message, 'error');
+    }
+};
 
 // ============================================
 // UPDATE WALLET BADGE
