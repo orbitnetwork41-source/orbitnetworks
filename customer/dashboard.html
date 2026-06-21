@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,170 +8,627 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" href="../css/style.css" />
     <link rel="stylesheet" href="../css/customer.css" />
+    <style>
+        /* ============================================
+           CUSTOMER DASHBOARD STYLES
+           ============================================ */
+        .sidebar {
+            background: var(--bg-sidebar, #111827);
+            border-right: 1px solid var(--sidebar-border, rgba(255,255,255,0.05));
+            transition: all 0.3s ease;
+            width: 260px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            color: var(--text-muted, #94a3b8);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 2px 0;
+        }
+
+        .sidebar-link:hover {
+            background: rgba(14, 165, 233, 0.08);
+            color: var(--text-primary, #ffffff);
+        }
+
+        .sidebar-link.active {
+            background: rgba(14, 165, 233, 0.12);
+            color: #60a5fa;
+        }
+
+        .sidebar-link i {
+            width: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .sidebar-link .badge {
+            margin-left: auto;
+            padding: 2px 8px;
+            border-radius: 50px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .sidebar-link .badge-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .sidebar-link .badge-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .sidebar-header {
+            padding: 20px 16px;
+            border-bottom: 1px solid var(--sidebar-border, rgba(255,255,255,0.05));
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--sidebar-border, rgba(255,255,255,0.05));
+            margin-top: auto;
+        }
+
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary, #ffffff);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 998;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            overflow-x: hidden;
+        }
+
+        /* Stats cards */
+        .stat-card {
+            background: var(--bg-card, #1a1a2e);
+            border: 1px solid var(--border-color, rgba(255,255,255,0.06));
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: rgba(14, 165, 233, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .stat-card .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        /* Quick action cards */
+        .quick-action {
+            background: var(--bg-card, #1a1a2e);
+            border: 1px solid var(--border-color, rgba(255,255,255,0.06));
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+        }
+
+        .quick-action:hover {
+            border-color: rgba(14, 165, 233, 0.3);
+            transform: translateY(-4px);
+        }
+
+        .quick-action .icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .quick-action:hover .icon {
+            transform: scale(1.1);
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                z-index: 999;
+                transform: translateX(-100%);
+                width: 280px;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .mobile-toggle {
+                display: block;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            .stat-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+
+            .quick-actions-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .welcome-banner {
+                flex-direction: column;
+                text-align: center;
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stat-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .header-actions {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(59,130,246,0.4);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(59,130,246,0.6);
+        }
+    </style>
 </head>
 <body>
-    <!-- Customer Portal -->
-    <div class="min-h-screen bg-[#0f0f1a]">
-        <!-- Top Navigation -->
-        <nav class="bg-[#1a1a2e] border-b border-white/5 px-6 py-4">
-            <div class="container mx-auto flex justify-between items-center">
-                <div class="flex items-center gap-4">
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
                         <i class="fas fa-satellite-dish text-white"></i>
                     </div>
                     <div>
-                        <h1 class="text-xl font-bold text-white">Orbit Networks</h1>
+                        <h1 class="text-lg font-bold text-white">Orbit</h1>
                         <p class="text-xs text-gray-400">Customer Portal</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-4">
-                    <!-- Notifications -->
-                    <button class="relative text-gray-400 hover:text-white transition">
-                        <i class="fas fa-bell text-xl"></i>
-                        <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
-                    </button>
-                    <!-- User Menu -->
-                    <div class="relative">
-                        <button id="userMenuBtn" class="flex items-center gap-3 text-white hover:text-gray-300 transition">
-                            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                <span class="font-bold text-sm" id="userInitial">JD</span>
-                            </div>
-                            <span id="userName">John Doe</span>
-                            <i class="fas fa-chevron-down text-sm"></i>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-1">
+                <a href="#" class="sidebar-link active" data-page="dashboard" onclick="navigateTo('dashboard')">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="sidebar-link" data-page="packages" onclick="navigateTo('packages')">
+                    <i class="fas fa-box"></i>
+                    <span>My Packages</span>
+                    <span class="badge badge-success">Active</span>
+                </a>
+                <a href="#" class="sidebar-link" data-page="wallet" onclick="navigateTo('wallet')">
+                    <i class="fas fa-wallet"></i>
+                    <span>Wallet</span>
+                    <span class="badge badge-success" id="walletBadge">KES 0</span>
+                </a>
+                <a href="#" class="sidebar-link" data-page="payments" onclick="navigateTo('payments')">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="#" class="sidebar-link" data-page="usage" onclick="navigateTo('usage')">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Usage</span>
+                </a>
+                <a href="#" class="sidebar-link" data-page="support" onclick="navigateTo('support')">
+                    <i class="fas fa-headset"></i>
+                    <span>Support</span>
+                    <span class="badge badge-warning">1</span>
+                </a>
+                <a href="#" class="sidebar-link" data-page="settings" onclick="navigateTo('settings')">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="w-full py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition flex items-center justify-center gap-2">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Navigation -->
+            <nav class="bg-[#1a1a2e] border-b border-white/5 px-4 md:px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <button class="mobile-toggle" id="mobileToggle" onclick="toggleSidebar()">
+                            <i class="fas fa-bars"></i>
                         </button>
-                        <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-[#1a1a2e] rounded-xl border border-white/10 shadow-xl py-2">
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
-                                <i class="fas fa-user mr-2"></i> Profile
-                            </a>
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
-                                <i class="fas fa-cog mr-2"></i> Settings
-                            </a>
-                            <hr class="my-2 border-white/5" />
-                            <button id="logoutBtn" class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition">
-                                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-satellite-dish text-white"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-lg font-bold text-white hidden sm:block">Orbit Networks</h1>
+                                <p class="text-xs text-gray-400">Customer Portal</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 md:gap-4">
+                        <!-- Notifications -->
+                        <button class="relative text-gray-400 hover:text-white transition">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                        </button>
+                        <!-- User Menu -->
+                        <div class="relative">
+                            <button id="userMenuBtn" class="flex items-center gap-2 md:gap-3 text-white hover:text-gray-300 transition">
+                                <div class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                    <span class="font-bold text-xs md:text-sm" id="userInitial">JD</span>
+                                </div>
+                                <span class="hidden sm:inline text-sm md:text-base" id="userName">John Doe</span>
+                                <i class="fas fa-chevron-down text-xs md:text-sm"></i>
                             </button>
+                            <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-[#1a1a2e] rounded-xl border border-white/10 shadow-xl py-2 z-50">
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
+                                    <i class="fas fa-user mr-2"></i> Profile
+                                </a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
+                                    <i class="fas fa-cog mr-2"></i> Settings
+                                </a>
+                                <hr class="my-2 border-white/5" />
+                                <button id="logoutBtnMobile" class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition">
+                                    <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                                </button>
+                            </div>
                         </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Page Content -->
+            <div class="container mx-auto px-4 md:px-6 py-6 md:py-8">
+                <!-- Dashboard Page -->
+                <div id="page-dashboard" class="page-content active">
+                    <!-- Welcome Banner -->
+                    <div class="welcome-banner bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl p-6 md:p-8 mb-6 md:mb-8 border border-blue-500/20 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl md:text-3xl font-bold text-white mb-1">Welcome back, <span id="welcomeName">John</span>!</h2>
+                            <p class="text-gray-400 text-sm">Your internet is active and running smoothly.</p>
+                        </div>
+                        <div class="hidden md:block">
+                            <span class="px-4 py-2 bg-green-500/20 text-green-400 rounded-full text-sm font-medium">
+                                <i class="fas fa-check-circle mr-1"></i> Connected
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="stat-grid grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
+                        <div class="stat-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-400">Data Used</p>
+                                    <p class="text-2xl font-bold text-white" id="dataUsed">0 GB</p>
+                                    <p class="text-xs text-gray-400">of <span id="dataLimit">0 GB</span></p>
+                                </div>
+                                <div class="stat-icon bg-blue-500/20 text-blue-400">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4 bg-white/5 rounded-full h-2 overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" id="progressBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-400">Package</p>
+                                    <p class="text-2xl font-bold text-white" id="currentPackage">-</p>
+                                    <p class="text-xs text-gray-400">Expires: <span id="expiryDate">Never</span></p>
+                                </div>
+                                <div class="stat-icon bg-purple-500/20 text-purple-400">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-400">Wallet Balance</p>
+                                    <p class="text-2xl font-bold text-green-400" id="walletBalance">KES 0</p>
+                                    <p class="text-xs text-gray-400">Last top-up: <span id="lastTopup">Never</span></p>
+                                </div>
+                                <div class="stat-icon bg-green-500/20 text-green-400">
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-400">Status</p>
+                                    <p class="text-2xl font-bold text-green-400" id="connectionStatus">Active</p>
+                                    <p class="text-xs text-gray-400">Speed: <span id="currentSpeed">-</span></p>
+                                </div>
+                                <div class="stat-icon bg-green-500/20 text-green-400">
+                                    <i class="fas fa-wifi"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="quick-actions-grid grid md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+                        <a href="#" class="quick-action" onclick="navigateTo('packages')">
+                            <div class="flex items-center gap-4">
+                                <div class="icon bg-blue-500/20 text-blue-400">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white">Buy Package</h3>
+                                    <p class="text-sm text-gray-400">Purchase new internet plan</p>
+                                </div>
+                                <i class="fas fa-arrow-right text-gray-400 ml-auto"></i>
+                            </div>
+                        </a>
+
+                        <a href="#" class="quick-action" onclick="navigateTo('wallet')">
+                            <div class="flex items-center gap-4">
+                                <div class="icon bg-green-500/20 text-green-400">
+                                    <i class="fas fa-coins"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white">Top Up Wallet</h3>
+                                    <p class="text-sm text-gray-400">Add funds to your account</p>
+                                </div>
+                                <i class="fas fa-arrow-right text-gray-400 ml-auto"></i>
+                            </div>
+                        </a>
+
+                        <a href="#" class="quick-action" onclick="navigateTo('support')">
+                            <div class="flex items-center gap-4">
+                                <div class="icon bg-purple-500/20 text-purple-400">
+                                    <i class="fas fa-headset"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white">Support</h3>
+                                    <p class="text-sm text-gray-400">Get help from our team</p>
+                                </div>
+                                <i class="fas fa-arrow-right text-gray-400 ml-auto"></i>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="bg-[#1a1a2e] rounded-2xl p-6 border border-white/5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-white">Recent Activity</h3>
+                            <button class="text-sm text-blue-400 hover:text-blue-300 transition">View All</button>
+                        </div>
+                        <div id="recentActivity" class="space-y-3">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other Pages -->
+                <div id="page-packages" class="page-content hidden">
+                    <div class="page-header mb-6">
+                        <h1 class="text-2xl md:text-3xl font-bold text-white">My Packages</h1>
+                        <p class="text-gray-400">View and manage your internet packages</p>
+                    </div>
+                    <div id="packagesContent" class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-[#1a1a2e] rounded-2xl p-8 text-center border border-white/5">
+                            <i class="fas fa-box text-4xl text-blue-400 mb-4"></i>
+                            <p class="text-gray-400">Package details coming soon...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="page-wallet" class="page-content hidden">
+                    <div class="page-header mb-6">
+                        <h1 class="text-2xl md:text-3xl font-bold text-white">Wallet</h1>
+                        <p class="text-gray-400">Manage your wallet balance and transactions</p>
+                    </div>
+                    <div id="walletContent" class="bg-[#1a1a2e] rounded-2xl p-8 text-center border border-white/5">
+                        <i class="fas fa-wallet text-4xl text-green-400 mb-4"></i>
+                        <p class="text-gray-400">Wallet details coming soon...</p>
+                    </div>
+                </div>
+
+                <div id="page-payments" class="page-content hidden">
+                    <div class="page-header mb-6">
+                        <h1 class="text-2xl md:text-3xl font-bold text-white">Payments</h1>
+                        <p class="text-gray-400">View your payment history</p>
+                    </div>
+                    <div id="paymentsContent" class="bg-[#1a1a2e] rounded-2xl p-8 text-center border border-white/5">
+                        <i class="fas fa-credit-card text-4xl text-purple-400 mb-4"></i>
+                        <p class="text-gray-400">Payment history coming soon...</p>
+                    </div>
+                </div>
+
+                <div id="page-usage" class="page-content hidden">
+                    <div class="page-header mb-6">
+                        <h1 class="text-2xl md:text-3xl font-bold text-white">Usage</h1>
+                        <p class="text-gray-400">Monitor your internet usage</p>
+                    </div>
+                    <div id="usageContent" class="bg-[#1a1a2e] rounded-2xl p-8 text-center border border-white/5">
+                        <i class="fas fa-chart-line text-4xl text-cyan-400 mb-4"></i>
+                        <p class="text-gray-400">Usage statistics coming soon...</p>
+                    </div>
+                </div>
+
+                <div id="page-support" class="page-content hidden">
+                    <div class="page-header mb-6">
+                        <h1 class="text-2xl md:text-3xl font-bold text-white">Support</h1>
+                        <p class="text-gray-400">Get help and support</p>
+                    </div>
+                    <div id="supportContent" class="bg-[#1a1a2e] rounded-2xl p-8 text-center border border-white/5">
+                        <i class="fas fa-headset text-4xl text-purple-400 mb-4"></i>
+                        <p class="text-gray-400">Support tickets coming soon...</p>
+                    </div>
+                </div>
+
+                <div id="page-settings" class="page-content hidden">
+                    <div class="page-header mb-6">
+                        <h1 class="text-2xl md:text-3xl font-bold text-white">Settings</h1>
+                        <p class="text-gray-400">Manage your account settings</p>
+                    </div>
+                    <div id="settingsContent" class="bg-[#1a1a2e] rounded-2xl p-8 text-center border border-white/5">
+                        <i class="fas fa-cog text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-400">Settings coming soon...</p>
                     </div>
                 </div>
             </div>
-        </nav>
-
-        <div class="container mx-auto px-6 py-8">
-            <!-- Welcome Banner -->
-            <div class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl p-8 mb-8 border border-blue-500/20">
-                <h2 class="text-3xl font-bold text-white mb-2">Welcome back, <span id="welcomeName">John</span>!</h2>
-                <p class="text-gray-400">Your internet is active and running smoothly.</p>
-            </div>
-
-            <!-- Stats Grid -->
-            <div class="grid md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-[#1a1a2e] rounded-2xl p-6 border border-white/5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-400">Data Used</p>
-                            <p class="text-2xl font-bold text-white" id="dataUsed">12.5 GB</p>
-                            <p class="text-xs text-gray-400">of <span id="dataLimit">50 GB</span></p>
-                        </div>
-                        <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-database text-blue-400 text-xl"></i>
-                        </div>
-                    </div>
-                    <div class="mt-4 bg-white/5 rounded-full h-2 overflow-hidden">
-                        <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" style="width: 25%"></div>
-                    </div>
-                </div>
-
-                <div class="bg-[#1a1a2e] rounded-2xl p-6 border border-white/5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-400">Package</p>
-                            <p class="text-2xl font-bold text-white" id="currentPackage">Premium</p>
-                            <p class="text-xs text-gray-400">Expires: <span id="expiryDate">2026-07-15</span></p>
-                        </div>
-                        <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-box text-purple-400 text-xl"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-[#1a1a2e] rounded-2xl p-6 border border-white/5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-400">Wallet Balance</p>
-                            <p class="text-2xl font-bold text-green-400" id="walletBalance">KES 1,250</p>
-                            <p class="text-xs text-gray-400">Last top-up: <span id="lastTopup">2 days ago</span></p>
-                        </div>
-                        <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-wallet text-green-400 text-xl"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-[#1a1a2e] rounded-2xl p-6 border border-white/5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-400">Status</p>
-                            <p class="text-2xl font-bold text-green-400" id="connectionStatus">Active</p>
-                            <p class="text-xs text-gray-400">Speed: <span id="currentSpeed">10 Mbps</span></p>
-                        </div>
-                        <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-wifi text-green-400 text-xl"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="grid md:grid-cols-3 gap-6 mb-8">
-                <a href="packages.html" class="group bg-[#1a1a2e] rounded-2xl p-6 border border-white/5 hover:border-blue-500/30 transition-all">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
-                            <i class="fas fa-shopping-cart text-blue-400 text-2xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-bold text-white">Buy Package</h3>
-                            <p class="text-sm text-gray-400">Purchase new internet plan</p>
-                        </div>
-                        <i class="fas fa-arrow-right text-gray-400 ml-auto group-hover:text-blue-400 transition"></i>
-                    </div>
-                </a>
-
-                <a href="wallet.html" class="group bg-[#1a1a2e] rounded-2xl p-6 border border-white/5 hover:border-green-500/30 transition-all">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 bg-green-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
-                            <i class="fas fa-coins text-green-400 text-2xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-bold text-white">Top Up Wallet</h3>
-                            <p class="text-sm text-gray-400">Add funds to your account</p>
-                        </div>
-                        <i class="fas fa-arrow-right text-gray-400 ml-auto group-hover:text-green-400 transition"></i>
-                    </div>
-                </a>
-
-                <a href="support.html" class="group bg-[#1a1a2e] rounded-2xl p-6 border border-white/5 hover:border-purple-500/30 transition-all">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
-                            <i class="fas fa-headset text-purple-400 text-2xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-bold text-white">Support</h3>
-                            <p class="text-sm text-gray-400">Get help from our team</p>
-                        </div>
-                        <i class="fas fa-arrow-right text-gray-400 ml-auto group-hover:text-purple-400 transition"></i>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="bg-[#1a1a2e] rounded-2xl p-6 border border-white/5">
-                <h3 class="text-lg font-bold text-white mb-4">Recent Activity</h3>
-                <div id="recentActivity" class="space-y-4">
-                    <!-- Will be populated by JavaScript -->
-                </div>
-            </div>
-        </div>
+        </main>
     </div>
+
+    <script>
+        // ============================================
+        // SIDEBAR TOGGLE
+        // ============================================
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+
+        // Close sidebar on resize to desktop
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                closeSidebar();
+            }
+        });
+
+        // ============================================
+        // NAVIGATION
+        // ============================================
+        function navigateTo(page) {
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(p => {
+                p.classList.add('hidden');
+                p.classList.remove('active');
+            });
+
+            // Show selected page
+            const target = document.getElementById(`page-${page}`);
+            if (target) {
+                target.classList.remove('hidden');
+                target.classList.add('active');
+            }
+
+            // Update sidebar links
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.page === page) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Close sidebar on mobile
+            closeSidebar();
+        }
+
+        // ============================================
+        // USER MENU TOGGLE
+        // ============================================
+        document.getElementById('userMenuBtn')?.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('userMenu');
+            menu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('userMenu');
+            const btn = document.getElementById('userMenuBtn');
+            if (!menu?.contains(e.target) && !btn?.contains(e.target)) {
+                menu?.classList.add('hidden');
+            }
+        });
+
+        // ============================================
+        // LOGOUT
+        // ============================================
+        document.querySelectorAll('#logoutBtn, #logoutBtnMobile').forEach(btn => {
+            btn?.addEventListener('click', function() {
+                // Will be handled by dashboard.js
+                window.dispatchEvent(new Event('customer-logout'));
+            });
+        });
+    </script>
 
     <script type="importmap">
     {
