@@ -66,7 +66,9 @@ const elements = {
     totalTickets: document.getElementById('totalTickets'),
     openTickets: document.getElementById('openTickets'),
     resolvedTickets: document.getElementById('resolvedTickets'),
-    supportTickets: document.getElementById('supportTickets')
+    supportTickets: document.getElementById('supportTickets'),
+    // Logout settings
+    logoutBtnSettings: document.getElementById('logoutBtnSettings')
 };
 
 // ============================================
@@ -78,7 +80,6 @@ if (!AuthService.isAuthenticated()) {
     throw new Error('Not authenticated');
 }
 
-// Check if user is admin
 if (AuthService.isAdmin()) {
     console.log('👑 Admin user, redirecting to admin dashboard...');
     window.location.href = '/orbitnetworks/admin/dashboard.html';
@@ -377,18 +378,12 @@ async function getLastTopup(customerId) {
 async function loadAllPages(customer) {
     if (!customer) return;
     
-    // Wallet page
     if (elements.walletBalancePage) {
         elements.walletBalancePage.textContent = formatCurrency(customer.wallet_balance || 0);
     }
     
-    // Payments page
     await loadPaymentsData();
-    
-    // Usage page
     await loadUsageData(customer);
-    
-    // Support page
     await loadSupportData();
 }
 
@@ -469,7 +464,6 @@ async function loadUsageData(customer) {
         const container = elements.usageHistory;
         if (!container) return;
 
-        // Generate sample usage history
         const history = [];
         for (let i = 0; i < 7; i++) {
             const date = new Date();
@@ -508,7 +502,6 @@ async function loadSupportData() {
 
         if (error) {
             console.warn('Could not get support tickets:', error);
-            // Use sample data if table doesn't exist
             const sampleTickets = [
                 { id: 1, subject: 'Internet connection issues', status: 'open', priority: 'high', created_at: new Date().toISOString() },
                 { id: 2, subject: 'Billing question', status: 'resolved', priority: 'normal', created_at: new Date(Date.now() - 86400000).toISOString() }
@@ -727,12 +720,12 @@ function setupUserMenu() {
     
     menuBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        menu.classList.toggle('hidden');
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
     });
     
     document.addEventListener('click', (e) => {
         if (!menu.contains(e.target) && !menuBtn.contains(e.target)) {
-            menu.classList.add('hidden');
+            menu.style.display = 'none';
         }
     });
 }
@@ -751,6 +744,10 @@ function setupLogout() {
     
     if (elements.logoutBtnMobile) {
         elements.logoutBtnMobile.addEventListener('click', logoutHandler);
+    }
+    
+    if (elements.logoutBtnSettings) {
+        elements.logoutBtnSettings.addEventListener('click', logoutHandler);
     }
 }
 
@@ -844,7 +841,7 @@ function subscribeToCustomerData() {
 }
 
 // ============================================
-// PAGE NAVIGATION - FIXED
+// PAGE NAVIGATION - MATCHES HTML
 // ============================================
 window.navigateTo = function(page) {
     console.log('🔄 Navigating to:', page);
@@ -860,24 +857,21 @@ window.navigateTo = function(page) {
         settings: document.getElementById('page-settings')
     };
     
-    // Hide all pages
+    // Hide all pages using style.display (matches HTML)
     Object.keys(pages).forEach(key => {
         if (pages[key]) {
             pages[key].style.display = 'none';
-            pages[key].classList.remove('active');
         }
     });
     
     // Show selected page
     if (pages[page]) {
         pages[page].style.display = 'block';
-        pages[page].classList.add('active');
         console.log('✅ Showing page:', page);
     } else {
         console.warn('⚠️ Page not found:', page);
         if (pages.dashboard) {
             pages.dashboard.style.display = 'block';
-            pages.dashboard.classList.add('active');
         }
         return;
     }
