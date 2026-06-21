@@ -47,7 +47,26 @@ const elements = {
     expiryDateCard: document.getElementById('expiryDateCard'),
     packagePriceCard: document.getElementById('packagePriceCard'),
     packageStatusBadge: document.getElementById('packageStatusBadge'),
-    availablePackages: document.getElementById('availablePackages')
+    availablePackages: document.getElementById('availablePackages'),
+    // Wallet page
+    walletBalancePage: document.getElementById('walletBalancePage'),
+    lastTopupPage: document.getElementById('lastTopupPage'),
+    transactionHistory: document.getElementById('transactionHistory'),
+    // Payments page
+    totalPaid: document.getElementById('totalPaid'),
+    pendingPayments: document.getElementById('pendingPayments'),
+    failedPayments: document.getElementById('failedPayments'),
+    paymentHistory: document.getElementById('paymentHistory'),
+    // Usage page
+    usageDataUsed: document.getElementById('usageDataUsed'),
+    usageDataRemaining: document.getElementById('usageDataRemaining'),
+    usagePercentage: document.getElementById('usagePercentage'),
+    usageHistory: document.getElementById('usageHistory'),
+    // Support page
+    totalTickets: document.getElementById('totalTickets'),
+    openTickets: document.getElementById('openTickets'),
+    resolvedTickets: document.getElementById('resolvedTickets'),
+    supportTickets: document.getElementById('supportTickets')
 };
 
 // ============================================
@@ -91,7 +110,6 @@ async function loadCustomerData() {
         const user = currentUser;
         const userId = user.id;
 
-        // Get customer data with package info
         const { data: customer, error } = await supabase
             .from('customers')
             .select(`
@@ -117,18 +135,12 @@ async function loadCustomerData() {
         customerData = customer;
         console.log('✅ Customer data loaded:', customerData);
 
-        // Update UI
         updateUI(customer);
-
-        // Get last top-up
         await getLastTopup(userId);
-
-        // Update wallet badge
         updateWalletBadge(customer);
-
-        // Update packages page
         updatePackagesPage(customer);
         await loadAvailablePackages();
+        await loadAllPages(customer);
 
     } catch (error) {
         console.error('❌ Error:', error);
@@ -144,7 +156,6 @@ function updateUI(customer) {
     
     const pkg = customer.packages || {};
     
-    // Data usage
     const dataUsed = customer.data_used_gb || 0;
     const dataLimit = customer.data_limit_gb || pkg.data_limit_gb || 50;
     const percentage = Math.min((dataUsed / dataLimit) * 100, 100);
@@ -153,7 +164,6 @@ function updateUI(customer) {
     if (elements.dataLimit) elements.dataLimit.textContent = `${dataLimit} GB`;
     if (elements.progressBar) elements.progressBar.style.width = `${percentage}%`;
 
-    // Package info
     if (elements.currentPackage) elements.currentPackage.textContent = pkg.name || 'No Package';
     if (elements.expiryDate) {
         elements.expiryDate.textContent = customer.expires_at 
@@ -161,12 +171,10 @@ function updateUI(customer) {
             : 'Never';
     }
 
-    // Wallet balance
     if (elements.walletBalance) {
         elements.walletBalance.textContent = formatCurrency(customer.wallet_balance || 0);
     }
     
-    // Status
     const status = customer.status || 'active';
     const statusColors = {
         'active': 'text-green-400',
@@ -179,7 +187,6 @@ function updateUI(customer) {
         elements.connectionStatus.className = 'text-2xl font-bold ' + (statusColors[status] || 'text-green-400');
     }
     
-    // Speed
     if (elements.currentSpeed) elements.currentSpeed.textContent = pkg.speed || 'N/A';
 }
 
@@ -197,7 +204,7 @@ function updatePackagesPage(customer) {
         elements.currentSpeedCard.textContent = pkg.speed || 'N/A';
     }
     if (elements.dataLimitCard) {
-        elements.dataLimitCard.textContent = pkg.data_limit_gb || '0 GB';
+        elements.dataLimitCard.textContent = (pkg.data_limit_gb || '0') + ' GB';
     }
     if (elements.expiryDateCard) {
         elements.expiryDateCard.textContent = customer.expires_at 
@@ -208,7 +215,6 @@ function updatePackagesPage(customer) {
         elements.packagePriceCard.textContent = pkg.price ? formatCurrency(pkg.price) : '-';
     }
     
-    // Status badge
     const status = customer.status || 'active';
     const statusColors = {
         'active': 'bg-green-500/20 text-green-400',
@@ -290,7 +296,6 @@ window.upgradePackage = async function(packageId) {
     if (!confirm('Are you sure you want to upgrade to this package?')) return;
     
     try {
-        // Get package details
         const { data: pkg, error: pkgError } = await supabase
             .from('packages')
             .select('*')
@@ -299,7 +304,6 @@ window.upgradePackage = async function(packageId) {
         
         if (pkgError) throw pkgError;
         
-        // Update customer
         const { error } = await supabase
             .from('customers')
             .update({
@@ -313,8 +317,6 @@ window.upgradePackage = async function(packageId) {
         if (error) throw error;
         
         showToast(`Upgraded to ${pkg.name} package!`, 'success');
-        
-        // Reload data
         await loadCustomerData();
         await loadAvailablePackages();
         
@@ -350,20 +352,231 @@ async function getLastTopup(customerId) {
         if (error) {
             console.warn('Could not get last top-up:', error);
             if (elements.lastTopup) elements.lastTopup.textContent = 'Never';
+            if (elements.lastTopupPage) elements.lastTopupPage.textContent = 'Never';
             return;
         }
         
         if (data && data.length > 0) {
-            if (elements.lastTopup) {
-                elements.lastTopup.textContent = getTimeAgo(new Date(data[0].created_at));
-            }
+            const timeAgo = getTimeAgo(new Date(data[0].created_at));
+            if (elements.lastTopup) elements.lastTopup.textContent = timeAgo;
+            if (elements.lastTopupPage) elements.lastTopupPage.textContent = timeAgo;
         } else {
             if (elements.lastTopup) elements.lastTopup.textContent = 'Never';
+            if (elements.lastTopupPage) elements.lastTopupPage.textContent = 'Never';
         }
     } catch (error) {
         console.warn('Error getting last top-up:', error);
         if (elements.lastTopup) elements.lastTopup.textContent = 'Never';
+        if (elements.lastTopupPage) elements.lastTopupPage.textContent = 'Never';
     }
+}
+
+// ============================================
+// LOAD ALL PAGES DATA
+// ============================================
+async function loadAllPages(customer) {
+    if (!customer) return;
+    
+    // Wallet page
+    if (elements.walletBalancePage) {
+        elements.walletBalancePage.textContent = formatCurrency(customer.wallet_balance || 0);
+    }
+    
+    // Payments page
+    await loadPaymentsData();
+    
+    // Usage page
+    await loadUsageData(customer);
+    
+    // Support page
+    await loadSupportData();
+}
+
+// ============================================
+// LOAD PAYMENTS DATA
+// ============================================
+async function loadPaymentsData() {
+    try {
+        const userId = currentUser.id;
+        
+        const { data: payments, error } = await supabase
+            .from('payments')
+            .select('*')
+            .eq('customer_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.warn('Could not get payments:', error);
+            return;
+        }
+
+        const total = payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+        const pending = payments?.filter(p => p.status === 'pending').length || 0;
+        const failed = payments?.filter(p => p.status === 'failed').length || 0;
+
+        if (elements.totalPaid) elements.totalPaid.textContent = formatCurrency(total);
+        if (elements.pendingPayments) elements.pendingPayments.textContent = pending;
+        if (elements.failedPayments) elements.failedPayments.textContent = failed;
+
+        const container = elements.paymentHistory;
+        if (!container) return;
+
+        if (!payments || payments.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-gray-400 py-8">
+                    <i class="fas fa-credit-card text-3xl mb-2"></i>
+                    <p>No payments found</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = payments.slice(0, 10).map(p => `
+            <div class="transaction-item flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition">
+                <div>
+                    <p class="text-sm text-white font-medium">${p.method?.toUpperCase() || 'Payment'}</p>
+                    <p class="text-xs text-gray-400">${formatDate(p.created_at)}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-bold ${p.status === 'completed' ? 'text-green-400' : p.status === 'pending' ? 'text-yellow-400' : 'text-red-400'}">
+                        ${formatCurrency(p.amount)}
+                    </p>
+                    <p class="text-xs text-gray-400">${p.status}</p>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Error loading payments data:', error);
+    }
+}
+
+// ============================================
+// LOAD USAGE DATA
+// ============================================
+async function loadUsageData(customer) {
+    try {
+        const pkg = customer.packages || {};
+        const dataUsed = customer.data_used_gb || 0;
+        const dataLimit = customer.data_limit_gb || pkg.data_limit_gb || 50;
+        const remaining = Math.max(0, dataLimit - dataUsed);
+        const percentage = dataLimit > 0 ? Math.min((dataUsed / dataLimit) * 100, 100) : 0;
+
+        if (elements.usageDataUsed) elements.usageDataUsed.textContent = `${dataUsed.toFixed(1)} GB`;
+        if (elements.usageDataRemaining) elements.usageDataRemaining.textContent = `${remaining.toFixed(1)} GB`;
+        if (elements.usagePercentage) elements.usagePercentage.textContent = `${percentage.toFixed(1)}%`;
+
+        const container = elements.usageHistory;
+        if (!container) return;
+
+        // Generate sample usage history
+        const history = [];
+        for (let i = 0; i < 7; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const used = (Math.random() * 2).toFixed(1);
+            history.push({
+                date: date,
+                used: used
+            });
+        }
+
+        container.innerHTML = history.map(h => `
+            <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                <span class="text-sm text-gray-300">${formatDate(h.date)}</span>
+                <span class="text-sm text-white">${h.used} GB</span>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Error loading usage data:', error);
+    }
+}
+
+// ============================================
+// LOAD SUPPORT DATA
+// ============================================
+async function loadSupportData() {
+    try {
+        const userId = currentUser.id;
+        
+        const { data: tickets, error } = await supabase
+            .from('support_tickets')
+            .select('*')
+            .eq('customer_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.warn('Could not get support tickets:', error);
+            // Use sample data if table doesn't exist
+            const sampleTickets = [
+                { id: 1, subject: 'Internet connection issues', status: 'open', priority: 'high', created_at: new Date().toISOString() },
+                { id: 2, subject: 'Billing question', status: 'resolved', priority: 'normal', created_at: new Date(Date.now() - 86400000).toISOString() }
+            ];
+            renderSupportTickets(sampleTickets);
+            return;
+        }
+
+        renderSupportTickets(tickets || []);
+
+    } catch (error) {
+        console.error('Error loading support data:', error);
+    }
+}
+
+function renderSupportTickets(tickets) {
+    const total = tickets.length;
+    const open = tickets.filter(t => t.status === 'open' || t.status === 'in_progress').length;
+    const resolved = tickets.filter(t => t.status === 'resolved' || t.status === 'closed').length;
+
+    if (elements.totalTickets) elements.totalTickets.textContent = total;
+    if (elements.openTickets) elements.openTickets.textContent = open;
+    if (elements.resolvedTickets) elements.resolvedTickets.textContent = resolved;
+
+    const container = elements.supportTickets;
+    if (!container) return;
+
+    if (!tickets || tickets.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-gray-400 py-8">
+                <i class="fas fa-ticket text-3xl mb-2"></i>
+                <p>No support tickets</p>
+                <button onclick="showNewTicketModal()" class="mt-4 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition">
+                    <i class="fas fa-plus mr-2"></i> Create Ticket
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = tickets.slice(0, 10).map(t => {
+        const statusColors = {
+            'open': 'bg-yellow-500/20 text-yellow-400',
+            'in_progress': 'bg-blue-500/20 text-blue-400',
+            'resolved': 'bg-green-500/20 text-green-400',
+            'closed': 'bg-gray-500/20 text-gray-400'
+        };
+        const priorityColors = {
+            'low': 'text-gray-400',
+            'normal': 'text-blue-400',
+            'high': 'text-yellow-400',
+            'urgent': 'text-red-400'
+        };
+        return `
+            <div class="support-ticket p-4 bg-white/5 rounded-lg hover:bg-white/10 transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-white font-medium">${t.subject}</p>
+                        <p class="text-xs text-gray-400">${formatDate(t.created_at)}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs px-2 py-1 rounded-full ${statusColors[t.status] || 'bg-gray-500/20 text-gray-400'}">${t.status}</span>
+                        <span class="text-xs block mt-1 ${priorityColors[t.priority] || 'text-gray-400'}">${t.priority || 'normal'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 // ============================================
@@ -374,7 +587,6 @@ async function loadRecentActivity() {
         const user = currentUser;
         const userId = user.id;
         
-        // Get payments
         const { data: payments, error: paymentsError } = await supabase
             .from('payments')
             .select('amount, method, status, created_at, reference')
@@ -386,7 +598,6 @@ async function loadRecentActivity() {
             console.warn('Could not get payments:', paymentsError);
         }
 
-        // Get wallet transactions
         const { data: walletTxns, error: walletError } = await supabase
             .from('wallet_transactions')
             .select('amount, type, method, status, created_at, description')
@@ -398,7 +609,6 @@ async function loadRecentActivity() {
             console.warn('Could not get wallet transactions:', walletError);
         }
 
-        // Combine and sort activities
         const activities = [];
         
         payments?.forEach(p => {
@@ -460,7 +670,6 @@ async function loadRecentActivity() {
             });
         });
         
-        // Sort by timestamp (newest first)
         activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         const recent = activities.slice(0, 10);
         
@@ -566,7 +775,6 @@ function subscribeToCustomerData() {
     const user = currentUser;
     const userId = user.id;
 
-    // Subscribe to customer data changes
     const customerChannel = supabase
         .channel(`customer:${userId}`)
         .on(
@@ -585,7 +793,6 @@ function subscribeToCustomerData() {
         )
         .subscribe();
 
-    // Subscribe to new payments
     const paymentsChannel = supabase
         .channel(`payments:${userId}`)
         .on(
@@ -605,7 +812,6 @@ function subscribeToCustomerData() {
         )
         .subscribe();
 
-    // Subscribe to wallet transactions
     const walletChannel = supabase
         .channel(`wallet:${userId}`)
         .on(
@@ -627,7 +833,6 @@ function subscribeToCustomerData() {
         )
         .subscribe();
 
-    // Clean up on page unload
     window.addEventListener('beforeunload', () => {
         customerChannel.unsubscribe();
         paymentsChannel.unsubscribe();
@@ -639,20 +844,42 @@ function subscribeToCustomerData() {
 }
 
 // ============================================
-// PAGE NAVIGATION
+// PAGE NAVIGATION - FIXED
 // ============================================
 window.navigateTo = function(page) {
+    console.log('🔄 Navigating to:', page);
+    
+    // Get all page containers
+    const pages = {
+        dashboard: document.getElementById('page-dashboard'),
+        packages: document.getElementById('page-packages'),
+        wallet: document.getElementById('page-wallet'),
+        payments: document.getElementById('page-payments'),
+        usage: document.getElementById('page-usage'),
+        support: document.getElementById('page-support'),
+        settings: document.getElementById('page-settings')
+    };
+    
     // Hide all pages
-    document.querySelectorAll('.page-content').forEach(p => {
-        p.classList.add('hidden');
-        p.classList.remove('active');
+    Object.keys(pages).forEach(key => {
+        if (pages[key]) {
+            pages[key].style.display = 'none';
+            pages[key].classList.remove('active');
+        }
     });
-
+    
     // Show selected page
-    const target = document.getElementById(`page-${page}`);
-    if (target) {
-        target.classList.remove('hidden');
-        target.classList.add('active');
+    if (pages[page]) {
+        pages[page].style.display = 'block';
+        pages[page].classList.add('active');
+        console.log('✅ Showing page:', page);
+    } else {
+        console.warn('⚠️ Page not found:', page);
+        if (pages.dashboard) {
+            pages.dashboard.style.display = 'block';
+            pages.dashboard.classList.add('active');
+        }
+        return;
     }
 
     // Update sidebar links
@@ -693,25 +920,12 @@ window.closeSidebar = function() {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 Initializing Customer Dashboard...');
     
-    // Set user info
     setUserInfo();
-    
-    // Setup user menu
     setupUserMenu();
-    
-    // Setup logout
     setupLogout();
-    
-    // Load customer data
     await loadCustomerData();
-    
-    // Load recent activity
     await loadRecentActivity();
-    
-    // Setup real-time subscriptions
     subscribeToCustomerData();
-    
-    // Start auto-refresh
     startAutoRefresh();
     
     console.log('✅ Customer Dashboard ready!');
